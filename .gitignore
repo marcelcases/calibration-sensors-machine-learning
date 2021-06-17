@@ -1,1 +1,4 @@
 *.pdf
+*.csv
+*.xlsx
+test.ipynb
