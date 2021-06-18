@@ -109,14 +109,16 @@ The new scatterplot, when compared to the original (raw sensor data **Sensor_O3*
 
 ### K-Nearest Neighbor
 
-Lazy learning algorithm because it doesn’t have a specialized training phase.
+K-Nearest Neighbor is considered to be a lazy learning algorithm because it doesn’t have a specialized training phase.
 
 For a K-Nearest Neighbor regression, a value of *k* (number of neighbors) must be chosen. It is recommended to choose k = sqrt(n), as long as it fulfills:
 * k value should be odd
 * k value must not be multiples of the number of classes
 * should not be too small or too large
 
-This is why *k* is set to 31, and the results below are obtained:
+Increasing *k* will tend to smooth graph boundaries and will avoiding overfitting at the cost of some resolution on the predicted output.
+
+With these considerations, *k* is set to 31, and the results below are obtained:
 
 ![KNN_Pred](img/KNN_Pred.png)
 
@@ -141,6 +143,27 @@ The obtained loss functions for K-Nearest Neighbor with k=31 are:
 ### Support Vector Regression
 
 ### Neural Network
+
+Nh = Ns/(α∗ (Ni + No))
+
+Hyperparameters setup:
+* Number of hidden layers Nh = 5
+* Neurons per layer = 64
+* Epochs = 200
+* Batch size = 10
+
+Training results:
+* Training time: 49 seconds
+* Minimum loss: 56.2758
+
+![KNN_Pred](img/NN_Pred.png)
+
+![KNN_Pred_scatter](img/NN_Pred_scatter.png)
+
+The obtained loss functions for Neural Network with the hyperparameters specified above are:
+* R-squared = 0.9669973687497283
+* RMSE = 58.02039042167329
+* MAE = 5.296128118515015
 
 ## Source code
 

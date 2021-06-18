@@ -48,8 +48,7 @@ plt.xticks(rotation=20)
 #%%
 # Data observation
 # Plot the ozone (KOhms) and ozone reference data (μgr/m^3) as function of time
-Sensor_O3_RefSt = df[["Sensor_O3", "RefSt"]]
-Sensor_O3_RefSt.plot()
+df[["Sensor_O3", "RefSt"]].plot()
 plt.xticks(rotation=20)
 
 # %%
@@ -109,8 +108,7 @@ print('Intercept: \n', regr.intercept_)
 print('Coefficients: \n', regr.coef_)
 
 df["MLR_Pred"] = -34.0316709 + 0.15929287*df["Sensor_O3"] + 2.49694134*df["Temp"] - 0.02949471*df["RelHum"]
-RefSt_MLR_Pred = df[["RefSt", "MLR_Pred"]]
-RefSt_MLR_Pred.plot()
+df[["RefSt", "MLR_Pred"]].plot()
 plt.xticks(rotation=20)
 
 #%%
@@ -126,10 +124,10 @@ def loss_functions(y_true, y_pred):
 
 #%%
 # MLR loss
-loss_functions(df["RefSt"], df["MLR_Pred"])
+loss_functions(y_true=df["RefSt"], y_pred=df["MLR_Pred"])
 
 # %%
-# K-nearest Neighbor
+# K-Nearest Neighbor
 X = df[['Sensor_O3', 'Temp', 'RelHum']]
 Y = df['RefSt']
 
@@ -141,15 +139,74 @@ neigh.fit(X, Y)
 df["KNN_Pred"] = neigh.predict(df[['Sensor_O3', 'Temp', 'RelHum']])
 print(df)
 
-#plot linear
-RefSt_KNN_Pred = df[["RefSt", "KNN_Pred"]]
-RefSt_KNN_Pred.plot()
+# plot linear
+df[["RefSt", "KNN_Pred"]].plot()
 plt.xticks(rotation=20)
 
 # plot regression
 sns.lmplot(x = 'RefSt', y = 'KNN_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
 
 # KNN loss
-loss_functions(df["RefSt"], df["KNN_Pred"])
+loss_functions(y_true=df["RefSt"], y_pred=df["KNN_Pred"])
+
+# %%
+# Random Forest
+
+
+
+
+
+
+# %%
+# Neural Network
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.layers import Dense, Activation, InputLayer
+from tensorflow.keras.models import Sequential
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+print(tf.__version__)
+X = df[['Sensor_O3', 'Temp', 'RelHum']]
+Y = df['RefSt']
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.08, random_state = 0)
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+# Initialising the ANN
+model = Sequential()
+
+model.add(InputLayer(input_shape=(3))) # Input layer
+model.add(Dense(units = 64, activation = 'relu')) # 1st hidden layer
+model.add(Dense(units = 64, activation = 'relu')) # 2nd hidden layer
+model.add(Dense(units = 64, activation = 'relu')) # 3rd hidden layer
+model.add(Dense(units = 64, activation = 'relu')) # 4th hidden layer
+model.add(Dense(units = 64, activation = 'relu')) # 5th hidden layer
+
+model.add(Dense(units = 1)) # Output layer
+
+model.compile(optimizer = 'adam', loss = 'mean_squared_error')
+
+model.fit(X_train, Y_train, batch_size = 10, epochs = 200)
+
+y_pred = model.predict(df[['normSensor_O3', 'normTemp', 'normRelHum']])
+df["NN_Pred"] = y_pred
+print(df)
+
+#%%
+# plot linear
+df[["RefSt", "NN_Pred"]].plot()
+plt.xticks(rotation=20)
+
+#%%
+# plot regression
+sns.lmplot(x = 'RefSt', y = 'NN_Pred', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+
+#%%
+# NN loss
+loss_functions(y_true=df["RefSt"], y_pred=df["NN_Pred"])
+
+
 
 # %%
