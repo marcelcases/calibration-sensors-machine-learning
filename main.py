@@ -117,12 +117,14 @@ plt.xticks(rotation=20)
 #%%
 # To plot the regression line over the scatter plot
 import seaborn as sns
+
 df = pd.DataFrame({'RefSt': MLR["RefSt"], 'MLR_Pred': MLR["MLR_Pred"]})
 sns.lmplot(x = 'RefSt', y = 'MLR_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
 
 #%%
 # Loss functions
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+
 def loss_functions(y_true, y_pred):
     print("Loss functions:")
     print("* R-squared =", r2_score(y_true, y_pred))
@@ -130,4 +132,34 @@ def loss_functions(y_true, y_pred):
     print("* MAE =", mean_absolute_error(y_true, y_pred))
 
 loss_functions(MLR["RefSt"], MLR["MLR_Pred"])
+
+# %%
+# K-nearest Neighbor
+from sklearn.neighbors import KNeighborsRegressor
+
+# dataset (X=m^2, y=rental price)
+df = pd.DataFrame({'Sensor_O3': sensor["Sensor_O3"], 'RefSt': sensor["RefSt"], 'Temp': sensor["Temp"], 'RelHum': sensor["RelHum"] })
+X = df[['Sensor_O3', 'Temp', 'RelHum']]
+Y = df['RefSt']
+
+# fit
+neigh = KNeighborsRegressor(n_neighbors=31)
+neigh.fit(X, Y)
+
+# predict
+print(neigh.predict([[36.3637,21.77,53.97]])) #16
+print(neigh.predict([[544.3303,28.4,35.03]])) #116.5
+
+KNN = df[["Sensor_O3", "RefSt", "Temp", "RelHum"]]
+KNN["KNN_Pred"] = neigh.predict(df[['Sensor_O3', 'Temp', 'RelHum']])
+print(KNN)
+KNN_plot = KNN[["RefSt", "KNN_Pred"]]
+KNN_plot.plot()
+plt.xticks(rotation=20)
+
+df = pd.DataFrame({'RefSt': KNN["RefSt"], 'KNN_Pred': KNN["KNN_Pred"]})
+sns.lmplot(x = 'RefSt', y = 'KNN_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
+
+loss_functions(KNN["RefSt"], KNN["KNN_Pred"])
+
 # %%

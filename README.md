@@ -25,9 +25,9 @@ The dataset consists in the data collected by an air pollution sensor in an air 
 The data is organized as follows:
 * date: Timestamp (UTC) for each measurement
 * RefSt: Reference Station O3 concentrations, in μgr/m<sup>3</sup> (real pollution levels)
-* Sensor O3: MOX sensor measurements, in KΩ
+* Sensor O3: MOX sensor measurements, in KΩ (unaccured pollution levels)
 * Temp: Temperature sensor, in °C
-* RelHum: Relativa humidity sensor, in %
+* RelHum: Relative humidity sensor, in %
 
 ## Data observation
 
@@ -90,7 +90,7 @@ To compare the predicted data with the reference, we draw a scatterplot with a l
 
 ![MLR_Pred_scatter](img/MLR_Pred_scatter.png)
 
-To check performance and compare them later, some regression loss function values are calculated for each method: R-square R<sup>2</sup>, Root-mean-square deviation RMSE, and Mean absolute error MAE.
+To check performance and later compare them, some regression loss function values are calculated for each method: **R-square** R<sup>2</sup>, **Root-mean-square deviation** RMSE, and **Mean absolute error** MAE.
 
 The obtained loss functions for Multiple Linear Regression are:
 * R-squared = 0.8959208007572963
@@ -107,7 +107,26 @@ The new scatterplot, when compared to the original (raw sensor data **Sensor_O3*
 
 ##### Mini-batch
 
-### K-nearest Neighbor
+### K-Nearest Neighbor
+
+Lazy learning algorithm because it doesn’t have a specialized training phase.
+
+For a K-Nearest Neighbor regression, a value of *k* (number of neighbors) must be chosen. It is recommended to choose k = sqrt(n), as long as it fulfills:
+* k value should be odd
+* k value must not be multiples of the number of classes
+* should not be too small or too large
+
+This is why *k* is set to 31, and the results below are obtained:
+
+![KNN_Pred](img/KNN_Pred.png)
+
+![KNN_Pred_scatter](img/KNN_Pred_scatter.png)
+
+The obtained loss functions for K-Nearest Neighbor with k=31 are:
+* R-squared = 0.870218865614176
+* RMSE = 228.1621737773153
+* MAE = 10.640032258064515
+
 
 ### Random Forest
 
@@ -130,6 +149,6 @@ You can check out the source code used for modeling and solving the problems on 
 
 ## References
 Task statement  
-Badura, Batog, Drzeniecka, Modzel. *Regression methods in the calibration of low‑cost sensors for ambient particulate matter measurements*  
 Barceló-Ordinas, Doudou, Garcia-Vidal, Badache. *Self-calibration methods for uncontrolled environments in sensor networks: A reference survey*  
+Badura, Batog, Drzeniecka, Modzel. *Regression methods in the calibration of low‑cost sensors for ambient particulate matter measurements*  
 Pandas documentation [pandas.pydata.org/docs/](https://pandas.pydata.org/docs/)  
