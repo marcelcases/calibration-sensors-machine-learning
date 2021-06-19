@@ -7,13 +7,12 @@ June 2021
 """
 
 #%%
-# Dependencies
+# General dependencies
 import pandas as pd # for data handling
 import matplotlib.pyplot as plt # for linear plot
 import seaborn as sns # for scatter plot
-from sklearn import linear_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.neighbors import KNeighborsRegressor
+
 
 #%%
 # Read sensor data
@@ -99,6 +98,7 @@ sns.lmplot(x = 'RefSt', y = 'RelHum', data = df, fit_reg=True, line_kws={'color'
 # %%
 # Data calibration
 # Multiple Linear Regression
+from sklearn import linear_model
 
 X = df[['Sensor_O3', 'Temp', 'RelHum']]
 Y = df['RefSt']
@@ -128,6 +128,8 @@ loss_functions(y_true=df["RefSt"], y_pred=df["MLR_Pred"])
 
 # %%
 # K-Nearest Neighbor
+from sklearn.neighbors import KNeighborsRegressor
+
 X = df[['Sensor_O3', 'Temp', 'RelHum']]
 Y = df['RefSt']
 
@@ -149,12 +151,32 @@ sns.lmplot(x = 'RefSt', y = 'KNN_Pred', data= df, fit_reg=True, line_kws={'color
 # KNN loss
 loss_functions(y_true=df["RefSt"], y_pred=df["KNN_Pred"])
 
+
 # %%
 # Random Forest
+from sklearn.ensemble import RandomForestRegressor
 
+X = df[['Sensor_O3', 'Temp', 'RelHum']]
+Y = df['RefSt']
+rf=RandomForestRegressor(n_estimators=100,random_state=0)
 
+# fit
+rf.fit(X, Y)
 
+# predict
+df["RF_Pred"] = rf.predict(X)
+print(df)
 
+# plot linear
+df[["RefSt", "RF_Pred"]].plot()
+plt.xticks(rotation=20)
+
+# plot regression
+sns.lmplot(x = 'RefSt', y = 'RF_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
+
+# RF loss
+loss_functions(y_true=df["RefSt"], y_pred=df["RF_Pred"])
+print('Feature importances:\n', list(zip(X.columns, rf.feature_importances_)))
 
 
 # %%
