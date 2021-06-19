@@ -180,9 +180,41 @@ print('Feature importances:\n', list(zip(X.columns, rf.feature_importances_)))
 
 
 # %%
+# Gaussian Process
+import numpy as np
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import ConstantKernel, RBF
+
+rbf = ConstantKernel(1.0) * RBF(length_scale=1.0)
+gp = GaussianProcessRegressor(kernel=rbf, alpha=0.4)
+
+X = df[['Sensor_O3', 'Temp', 'RelHum']]
+Y = df['RefSt']
+
+# fit
+gp.fit(X, Y)
+
+# predict
+df["GP_Pred"] = gp.predict(X)
+
+# Obtain optimized kernel parameters
+l = gp.kernel_.k2.get_params()['length_scale']
+sigma_f = np.sqrt(gp.kernel_.k1.get_params()['constant_value'])
+
+# plot linear
+df[["RefSt", "GP_Pred"]].plot()
+plt.xticks(rotation=20)
+
+# plot regression
+sns.lmplot(x = 'RefSt', y = 'GP_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
+
+# GP loss
+loss_functions(y_true=df["RefSt"], y_pred=df["GP_Pred"])
+
+
+# %%
 # Neural Network
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.keras.layers import Dense, Activation, InputLayer
 from tensorflow.keras.models import Sequential
 from sklearn.model_selection import train_test_split
