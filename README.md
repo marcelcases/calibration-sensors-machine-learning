@@ -248,9 +248,9 @@ Obtained results:
 ![KNN_Pred_scatter](img/NN_Pred_scatter.png)
 
 The obtained loss functions for Neural Network with the hyperparameters specified above are:
-* R-squared = 0.9346110758494881
-* RMSE = 111.48131359378803
-* MAE = 8.238458507061004
+* R-squared = 0.9402881574652502
+* RMSE = 101.80247999732873
+* MAE = 8.050368747711182
 
 ## Source code
 

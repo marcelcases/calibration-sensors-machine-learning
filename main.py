@@ -32,6 +32,19 @@ df_train = pd.DataFrame({'RefSt': Y_train, 'Sensor_O3': X_train["Sensor_O3"], 'T
 df_test = pd.DataFrame({'RefSt': Y_test, 'Sensor_O3': X_test["Sensor_O3"], 'Temp': X_test["Temp"], 'RelHum': X_test["RelHum"]})
 
 
+# %%
+# Normalise sensor data
+def normalize(col):
+    μ = col.mean()
+    σ = col.std()
+    return (col - μ)/σ
+
+df["normRefSt"] = normalize(df["RefSt"])
+df["normSensor_O3"] = normalize(df["Sensor_O3"])
+df["normTemp"] = normalize(df["Temp"])
+df["normRelHum"] = normalize(df["RelHum"])
+
+
 #%%
 # Loss functions definition
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
@@ -83,19 +96,6 @@ plt.xticks(rotation=20)
 # Raw scatter plot
 sns.lmplot(x = 'Sensor_O3', y = 'RefSt', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
 
-# %%
-# Normalise sensor data
-def normalize(col):
-    μ = col.mean()
-    σ = col.std()
-    return (col - μ)/σ
-
-df["normRefSt"] = normalize(df["RefSt"])
-df["normSensor_O3"] = normalize(df["Sensor_O3"])
-df["normTemp"] = normalize(df["Temp"])
-df["normRelHum"] = normalize(df["RelHum"])
-
-print(df)
 
 # %%
 # Normalised scatter plot
@@ -148,7 +148,12 @@ loss_functions(y_true=df_test["RefSt"], y_pred=df_test["MLR_Pred"])
 
 
 # %%
-# Multiple Linear Regression with Gradient Descent Method
+# Multiple Linear Regression with Batch Gradient Descent
+
+
+
+# %%
+# Multiple Linear Regression with Stochastic Gradient Descent
 from sklearn.linear_model import SGDRegressor
 from sklearn.preprocessing import StandardScaler
 
@@ -394,7 +399,6 @@ sns.lmplot(x = 'RefSt', y = 'NN_Pred', data = df_test, fit_reg=True, line_kws={'
 
 # NN loss
 loss_functions(y_true=df_test["RefSt"], y_pred=df_test["NN_Pred"])
-
 
 
 # %%
