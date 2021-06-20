@@ -11,15 +11,37 @@ June 2021
 import pandas as pd # for data handling
 import matplotlib.pyplot as plt # for linear plot
 import seaborn as sns # for scatter plot
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from sklearn.model_selection import train_test_split
+import datetime
 
 
 #%%
 # Read sensor data
 sensor = pd.read_csv("data.csv", sep=';', index_col=0, parse_dates=False)
 
-# Build dataset
+# Build main dataset
 df = pd.DataFrame({'RefSt': sensor["RefSt"], 'Sensor_O3': sensor["Sensor_O3"], 'Temp': sensor["Temp"], 'RelHum': sensor["RelHum"]})
+
+# Split main dataset and build train and test datasets
+X = df[['Sensor_O3', 'Temp', 'RelHum']]
+Y = df['RefSt']
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.2, random_state = 1, shuffle=False)
+
+df_train = pd.DataFrame({'RefSt': Y_train, 'Sensor_O3': X_train["Sensor_O3"], 'Temp': X_train["Temp"], 'RelHum': X_train["RelHum"]})
+df_test = pd.DataFrame({'RefSt': Y_test, 'Sensor_O3': X_test["Sensor_O3"], 'Temp': X_test["Temp"], 'RelHum': X_test["RelHum"]})
+
+
+#%%
+# Loss functions definition
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+
+def loss_functions(y_true, y_pred):
+    print("Loss functions:")
+    print("* R-squared =", r2_score(y_true, y_pred))
+    print("* RMSE =", mean_squared_error(y_true, y_pred))
+    print("* MAE =", mean_absolute_error(y_true, y_pred))
+
 
 #%%
 # Intro to Pandas
@@ -95,115 +117,150 @@ sns.lmplot(x = 'Sensor_O3', y = 'RelHum', data = df, fit_reg=True, line_kws={'co
 # RelHum with respect to RefSt
 sns.lmplot(x = 'RefSt', y = 'RelHum', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
 
+
 # %%
 # Data calibration
 # Multiple Linear Regression
 from sklearn import linear_model
 
-X = df[['Sensor_O3', 'Temp', 'RelHum']]
-Y = df['RefSt']
+# Model
 regr = linear_model.LinearRegression()
-regr.fit(X, Y)
+
+# Fit
+regr.fit(X_train, Y_train)
+
+# Get MLR coefficients
 print('Intercept: \n', regr.intercept_)
 print('Coefficients: \n', regr.coef_)
 
-df["MLR_Pred"] = -34.0316709 + 0.15929287*df["Sensor_O3"] + 2.49694134*df["Temp"] - 0.02949471*df["RelHum"]
-df[["RefSt", "MLR_Pred"]].plot()
+# Predict
+df_test["MLR_Pred"] = regr.intercept_ + regr.coef_[0]*df_test["Sensor_O3"] + regr.coef_[1]*df_test["Temp"] - regr.coef_[2]*df_test["RelHum"]
+
+# Plot linear
+df_test[["RefSt", "MLR_Pred"]].plot()
 plt.xticks(rotation=20)
 
-#%%
+# Plot regression
 sns.lmplot(x = 'RefSt', y = 'MLR_Pred', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
 
-#%%
-# Loss functions definition
-def loss_functions(y_true, y_pred):
-    print("Loss functions:")
-    print("* R-squared =", r2_score(y_true, y_pred))
-    print("* RMSE =", mean_squared_error(y_true, y_pred))
-    print("* MAE =", mean_absolute_error(y_true, y_pred))
-
-#%%
 # MLR loss
 loss_functions(y_true=df["RefSt"], y_pred=df["MLR_Pred"])
+
 
 # %%
 # K-Nearest Neighbor
 from sklearn.neighbors import KNeighborsRegressor
 
-X = df[['Sensor_O3', 'Temp', 'RelHum']]
-Y = df['RefSt']
-
 # fit
-neigh = KNeighborsRegressor(n_neighbors=31)
-neigh.fit(X, Y)
+knn = KNeighborsRegressor(n_neighbors=5)
+knn.fit(X_train, Y_train)
 
 # predict
-df["KNN_Pred"] = neigh.predict(df[['Sensor_O3', 'Temp', 'RelHum']])
-print(df)
+df_test["KNN_Pred"] = knn.predict(X_test)
+print(df_test)
 
 # plot linear
-df[["RefSt", "KNN_Pred"]].plot()
+df_test[["RefSt", "KNN_Pred"]].plot()
 plt.xticks(rotation=20)
 
 # plot regression
-sns.lmplot(x = 'RefSt', y = 'KNN_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'KNN_Pred', data= df_test, fit_reg=True, line_kws={'color': 'orange'}) 
 
 # KNN loss
-loss_functions(y_true=df["RefSt"], y_pred=df["KNN_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["KNN_Pred"])
+
+
+# %%
+# K-Nearest Neighbor stats vs. hyperparameters
+def knn_stats():
+    knn_aux = pd.DataFrame({'RefSt': Y_test})
+
+    n_neighbors = [*range(1, 101, 1)]
+    r_squared = []
+    rmse = []
+    mae = []
+    time_ms = []
+
+    for i in n_neighbors:
+        knn = KNeighborsRegressor(n_neighbors=i)
+
+        # fit
+        start_time = datetime.datetime.now()
+        knn.fit(X_train, Y_train)
+        end_time = datetime.datetime.now()
+
+        # predict
+        knn_aux["KNN_Pred"] = knn.predict(X_test)
+
+        time_diff = (end_time - start_time)
+        execution_time = time_diff.total_seconds() * 1000
+    
+        # KNN loss
+        r_squared.append(r2_score(knn_aux["RefSt"], knn_aux["KNN_Pred"]))
+        rmse.append(mean_squared_error(knn_aux["RefSt"], knn_aux["KNN_Pred"]))
+        mae.append(mean_absolute_error(knn_aux["RefSt"], knn_aux["KNN_Pred"]))
+        time_ms.append(execution_time)
+
+    knn_stats = pd.DataFrame({'n_neighbors': n_neighbors, 'r_squared': r_squared, 'rmse': rmse, 'mae': mae, 'time_ms': time_ms})
+    knn_stats = knn_stats.set_index('n_neighbors') # index column (X axis for the plots)
+    print(knn_stats)
+
+    # plot
+    knn_stats[["r_squared"]].plot()
+    knn_stats[["rmse"]].plot()
+    knn_stats[["mae"]].plot()
+    knn_stats[["time_ms"]].plot()
+
+knn_stats()
 
 
 # %%
 # Random Forest
 from sklearn.ensemble import RandomForestRegressor
 
-X = df[['Sensor_O3', 'Temp', 'RelHum']]
-Y = df['RefSt']
-
 # fit
 rf=RandomForestRegressor(n_estimators=30,random_state=0)
-rf.fit(X, Y)
+rf.fit(X_train, Y_train)
 
 # predict
-df["RF_Pred"] = rf.predict(X)
-print(df)
+df_test["RF_Pred"] = rf.predict(X_test)
+print(df_test)
 
 # plot linear
-df[["RefSt", "RF_Pred"]].plot()
+df_test[["RefSt", "RF_Pred"]].plot()
 plt.xticks(rotation=20)
 
 # plot regression
-sns.lmplot(x = 'RefSt', y = 'RF_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'RF_Pred', data= df_test, fit_reg=True, line_kws={'color': 'orange'}) 
 
 # RF loss
-loss_functions(y_true=df["RefSt"], y_pred=df["RF_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["RF_Pred"])
+
+# RF feature importances
 print('Feature importances:\n', list(zip(X.columns, rf.feature_importances_)))
+
 
 # %%
 # Random Forest stats vs. hyperparameters
-import datetime
-
 def rf_stats():
-    X = df[['Sensor_O3', 'Temp', 'RelHum']]
-    Y = df['RefSt']
-
-    rf_aux = pd.DataFrame({'RefSt': sensor["RefSt"]})
+    rf_aux = pd.DataFrame({'RefSt': Y_test})
 
     n_estimators = [*range(1, 101, 1)]
     r_squared = []
     rmse = []
     mae = []
-    rf_time_ms = []
+    time_ms = []
 
     for i in n_estimators:
         rf=RandomForestRegressor(n_estimators=i,random_state=0)
 
         # fit
         start_time = datetime.datetime.now()
-        rf.fit(X, Y)
+        rf.fit(X_train, Y_train)
         end_time = datetime.datetime.now()
 
         # predict
-        rf_aux["RF_Pred"] = rf.predict(X)
+        rf_aux["RF_Pred"] = rf.predict(X_test)
 
         time_diff = (end_time - start_time)
         execution_time = time_diff.total_seconds() * 1000
@@ -212,9 +269,9 @@ def rf_stats():
         r_squared.append(r2_score(rf_aux["RefSt"], rf_aux["RF_Pred"]))
         rmse.append(mean_squared_error(rf_aux["RefSt"], rf_aux["RF_Pred"]))
         mae.append(mean_absolute_error(rf_aux["RefSt"], rf_aux["RF_Pred"]))
-        rf_time_ms.append(execution_time)
+        time_ms.append(execution_time)
 
-    rf_stats = pd.DataFrame({'n_estimators': n_estimators, 'r_squared': r_squared, 'rmse': rmse, 'mae': mae, 'rf_time_ms': rf_time_ms})
+    rf_stats = pd.DataFrame({'n_estimators': n_estimators, 'r_squared': r_squared, 'rmse': rmse, 'mae': mae, 'time_ms': time_ms})
     rf_stats = rf_stats.set_index('n_estimators') # index column (X axis for the plots)
     print(rf_stats)
 
@@ -222,41 +279,41 @@ def rf_stats():
     rf_stats[["r_squared"]].plot()
     rf_stats[["rmse"]].plot()
     rf_stats[["mae"]].plot()
-    rf_stats[["rf_time_ms"]].plot()
+    rf_stats[["time_ms"]].plot()
 
-# rf_stats()
+rf_stats()
 
 # %%
 # Gaussian Process
-import numpy as np
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import ConstantKernel, RBF
+# import numpy as np
+# from sklearn.gaussian_process import GaussianProcessRegressor
+# from sklearn.gaussian_process.kernels import ConstantKernel, RBF
 
-rbf = ConstantKernel(1.0) * RBF(length_scale=1.0)
-gp = GaussianProcessRegressor(kernel=rbf, alpha=0)
+# rbf = ConstantKernel(1.0) * RBF(length_scale=1.0)
+# gp = GaussianProcessRegressor(kernel=rbf, alpha=0)
 
-X = df[['Sensor_O3', 'Temp', 'RelHum']]
-Y = df['RefSt']
+# X = df[['Sensor_O3', 'Temp', 'RelHum']]
+# Y = df['RefSt']
 
-# fit
-gp.fit(X, Y)
+# # fit
+# gp.fit(X, Y)
 
-# predict
-df["GP_Pred"] = gp.predict(X)
+# # predict
+# df["GP_Pred"] = gp.predict(X)
 
-# Obtain optimized kernel parameters
-l = gp.kernel_.k2.get_params()['length_scale']
-sigma_f = np.sqrt(gp.kernel_.k1.get_params()['constant_value'])
+# # Obtain optimized kernel parameters
+# l = gp.kernel_.k2.get_params()['length_scale']
+# sigma_f = np.sqrt(gp.kernel_.k1.get_params()['constant_value'])
 
-# plot linear
-df[["RefSt", "GP_Pred"]].plot()
-plt.xticks(rotation=20)
+# # plot linear
+# df[["RefSt", "GP_Pred"]].plot()
+# plt.xticks(rotation=20)
 
-# plot regression
-sns.lmplot(x = 'RefSt', y = 'GP_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
+# # plot regression
+# sns.lmplot(x = 'RefSt', y = 'GP_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
 
-# GP loss
-loss_functions(y_true=df["RefSt"], y_pred=df["GP_Pred"])
+# # GP loss
+# loss_functions(y_true=df["RefSt"], y_pred=df["GP_Pred"])
 
 
 # %%
@@ -264,49 +321,43 @@ loss_functions(y_true=df["RefSt"], y_pred=df["GP_Pred"])
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Activation, InputLayer
 from tensorflow.keras.models import Sequential
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 print(tf.__version__)
-X = df[['Sensor_O3', 'Temp', 'RelHum']]
-Y = df['RefSt']
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.08, random_state = 0)
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
-# Initialising the ANN
+# Model
 model = Sequential()
 
+# Model - Layers
 model.add(InputLayer(input_shape=(3))) # Input layer
 model.add(Dense(units = 64, activation = 'relu')) # 1st hidden layer
 model.add(Dense(units = 64, activation = 'relu')) # 2nd hidden layer
 model.add(Dense(units = 64, activation = 'relu')) # 3rd hidden layer
 model.add(Dense(units = 64, activation = 'relu')) # 4th hidden layer
 model.add(Dense(units = 64, activation = 'relu')) # 5th hidden layer
-
 model.add(Dense(units = 1)) # Output layer
 
 model.compile(optimizer = 'adam', loss = 'mean_squared_error')
 
+# Fit
 model.fit(X_train, Y_train, batch_size = 10, epochs = 200)
 
-y_pred = model.predict(df[['normSensor_O3', 'normTemp', 'normRelHum']])
-df["NN_Pred"] = y_pred
+# Predict
+df_test["NN_Pred"] = model.predict(X_test)
 print(df)
 
-#%%
-# plot linear
-df[["RefSt", "NN_Pred"]].plot()
+# Plot linear
+df_test[["RefSt", "NN_Pred"]].plot()
 plt.xticks(rotation=20)
 
-#%%
-# plot regression
-sns.lmplot(x = 'RefSt', y = 'NN_Pred', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+# Plot regression
+sns.lmplot(x = 'RefSt', y = 'NN_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
 
-#%%
 # NN loss
-loss_functions(y_true=df["RefSt"], y_pred=df["NN_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["NN_Pred"])
 
 
 
