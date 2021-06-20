@@ -121,30 +121,65 @@ sns.lmplot(x = 'RefSt', y = 'RelHum', data = df, fit_reg=True, line_kws={'color'
 # %%
 # Data calibration
 # Multiple Linear Regression
-from sklearn import linear_model
+from sklearn.linear_model import LinearRegression
 
 # Model
-regr = linear_model.LinearRegression()
+lr = LinearRegression()
 
 # Fit
-regr.fit(X_train, Y_train)
+lr.fit(X_train, Y_train)
 
 # Get MLR coefficients
-print('Intercept: \n', regr.intercept_)
-print('Coefficients: \n', regr.coef_)
+print('Intercept: \n', lr.intercept_)
+print('Coefficients: \n', lr.coef_)
 
 # Predict
-df_test["MLR_Pred"] = regr.intercept_ + regr.coef_[0]*df_test["Sensor_O3"] + regr.coef_[1]*df_test["Temp"] - regr.coef_[2]*df_test["RelHum"]
+df_test["MLR_Pred"] = lr.intercept_ + lr.coef_[0]*df_test["Sensor_O3"] + lr.coef_[1]*df_test["Temp"] - lr.coef_[2]*df_test["RelHum"]
 
 # Plot linear
 df_test[["RefSt", "MLR_Pred"]].plot()
 plt.xticks(rotation=20)
 
 # Plot regression
-sns.lmplot(x = 'RefSt', y = 'MLR_Pred', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'MLR_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
 
 # MLR loss
-loss_functions(y_true=df["RefSt"], y_pred=df["MLR_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["MLR_Pred"])
+
+
+# %%
+# Multiple Linear Regression with Gradient Descent Method
+from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import StandardScaler
+
+# Model
+sgdr = SGDRegressor()
+
+# Normalize
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+# Fit
+sgdr.fit(X_train, Y_train)
+
+# Get MLR coefficients
+print('Intercept: \n', sgdr.intercept_)
+print('Coefficients: \n', sgdr.coef_)
+
+# Predict
+# df_test["MLR_SGDR_Pred"] = sgdr.intercept_ + sgdr.coef_[0]*X_test[0] + sgdr.coef_[1]*X_test[1] - sgdr.coef_[2]*X_test[2]
+df_test["MLR_SGDR_Pred"] = sgdr.predict(X_test)
+
+# Plot linear
+df_test[["RefSt", "MLR_SGDR_Pred"]].plot()
+plt.xticks(rotation=20)
+
+# Plot regression
+sns.lmplot(x = 'RefSt', y = 'MLR_SGDR_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+
+# MLR loss
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["MLR_SGDR_Pred"])
 
 
 # %%
@@ -152,7 +187,7 @@ loss_functions(y_true=df["RefSt"], y_pred=df["MLR_Pred"])
 from sklearn.neighbors import KNeighborsRegressor
 
 # fit
-knn = KNeighborsRegressor(n_neighbors=5)
+knn = KNeighborsRegressor(n_neighbors=19)
 knn.fit(X_train, Y_train)
 
 # predict
@@ -175,7 +210,7 @@ loss_functions(y_true=df_test["RefSt"], y_pred=df_test["KNN_Pred"])
 def knn_stats():
     knn_aux = pd.DataFrame({'RefSt': Y_test})
 
-    n_neighbors = [*range(1, 101, 1)]
+    n_neighbors = [*range(1, 151, 1)]
     r_squared = []
     rmse = []
     mae = []
@@ -185,17 +220,15 @@ def knn_stats():
         knn = KNeighborsRegressor(n_neighbors=i)
 
         # fit
-        start_time = datetime.datetime.now()
+        start_time = float(datetime.datetime.now().strftime('%S.%f'))
         knn.fit(X_train, Y_train)
-        end_time = datetime.datetime.now()
+        end_time = float(datetime.datetime.now().strftime('%S.%f'))
+        execution_time = (end_time - start_time) * 1000
 
         # predict
         knn_aux["KNN_Pred"] = knn.predict(X_test)
 
-        time_diff = (end_time - start_time)
-        execution_time = time_diff.total_seconds() * 1000
-    
-        # KNN loss
+            # KNN loss
         r_squared.append(r2_score(knn_aux["RefSt"], knn_aux["KNN_Pred"]))
         rmse.append(mean_squared_error(knn_aux["RefSt"], knn_aux["KNN_Pred"]))
         mae.append(mean_absolute_error(knn_aux["RefSt"], knn_aux["KNN_Pred"]))
@@ -219,7 +252,7 @@ knn_stats()
 from sklearn.ensemble import RandomForestRegressor
 
 # fit
-rf=RandomForestRegressor(n_estimators=30,random_state=0)
+rf=RandomForestRegressor(n_estimators=20,random_state=0)
 rf.fit(X_train, Y_train)
 
 # predict
@@ -255,16 +288,14 @@ def rf_stats():
         rf=RandomForestRegressor(n_estimators=i,random_state=0)
 
         # fit
-        start_time = datetime.datetime.now()
+        start_time = float(datetime.datetime.now().strftime('%S.%f'))
         rf.fit(X_train, Y_train)
-        end_time = datetime.datetime.now()
+        end_time = float(datetime.datetime.now().strftime('%S.%f'))
+        execution_time = (end_time - start_time) * 1000
 
         # predict
         rf_aux["RF_Pred"] = rf.predict(X_test)
 
-        time_diff = (end_time - start_time)
-        execution_time = time_diff.total_seconds() * 1000
-    
         # RF loss
         r_squared.append(r2_score(rf_aux["RefSt"], rf_aux["RF_Pred"]))
         rmse.append(mean_squared_error(rf_aux["RefSt"], rf_aux["RF_Pred"]))
@@ -324,30 +355,35 @@ from tensorflow.keras.models import Sequential
 from sklearn.preprocessing import StandardScaler
 
 print(tf.__version__)
+
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
 # Model
-model = Sequential()
+nn = Sequential()
 
 # Model - Layers
-model.add(InputLayer(input_shape=(3))) # Input layer
-model.add(Dense(units = 64, activation = 'relu')) # 1st hidden layer
-model.add(Dense(units = 64, activation = 'relu')) # 2nd hidden layer
-model.add(Dense(units = 64, activation = 'relu')) # 3rd hidden layer
-model.add(Dense(units = 64, activation = 'relu')) # 4th hidden layer
-model.add(Dense(units = 64, activation = 'relu')) # 5th hidden layer
-model.add(Dense(units = 1)) # Output layer
+nn.add(InputLayer(input_shape=(3))) # Input layer
+nn.add(Dense(units = 64, activation = 'relu')) # 1st hidden layer
+nn.add(Dense(units = 64, activation = 'relu')) # 2nd hidden layer
+nn.add(Dense(units = 64, activation = 'relu')) # 3rd hidden layer
+nn.add(Dense(units = 64, activation = 'relu')) # 4th hidden layer
+nn.add(Dense(units = 64, activation = 'relu')) # 5th hidden layer
+nn.add(Dense(units = 1)) # Output layer
 
-model.compile(optimizer = 'adam', loss = 'mean_squared_error')
+nn.compile(optimizer = 'adam', loss = 'mean_squared_error')
 
 # Fit
-model.fit(X_train, Y_train, batch_size = 10, epochs = 200)
+history = nn.fit(X_train, Y_train, batch_size = 10, epochs = 200)
+
+# Plot loss
+# plt.plot(history.history['loss'])
+# plt.plot(history.history['val_loss'])
 
 # Predict
-df_test["NN_Pred"] = model.predict(X_test)
-print(df)
+df_test["NN_Pred"] = nn.predict(X_test)
+print(df_test)
 
 # Plot linear
 df_test[["RefSt", "NN_Pred"]].plot()
