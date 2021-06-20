@@ -158,9 +158,9 @@ from sklearn.ensemble import RandomForestRegressor
 
 X = df[['Sensor_O3', 'Temp', 'RelHum']]
 Y = df['RefSt']
-rf=RandomForestRegressor(n_estimators=100,random_state=0)
 
 # fit
+rf=RandomForestRegressor(n_estimators=30,random_state=0)
 rf.fit(X, Y)
 
 # predict
@@ -178,6 +178,53 @@ sns.lmplot(x = 'RefSt', y = 'RF_Pred', data= df, fit_reg=True, line_kws={'color'
 loss_functions(y_true=df["RefSt"], y_pred=df["RF_Pred"])
 print('Feature importances:\n', list(zip(X.columns, rf.feature_importances_)))
 
+# %%
+# Random Forest stats vs. hyperparameters
+import datetime
+
+def rf_stats():
+    X = df[['Sensor_O3', 'Temp', 'RelHum']]
+    Y = df['RefSt']
+
+    rf_aux = pd.DataFrame({'RefSt': sensor["RefSt"]})
+
+    n_estimators = [*range(1, 101, 1)]
+    r_squared = []
+    rmse = []
+    mae = []
+    rf_time_ms = []
+
+    for i in n_estimators:
+        rf=RandomForestRegressor(n_estimators=i,random_state=0)
+
+        # fit
+        start_time = datetime.datetime.now()
+        rf.fit(X, Y)
+        end_time = datetime.datetime.now()
+
+        # predict
+        rf_aux["RF_Pred"] = rf.predict(X)
+
+        time_diff = (end_time - start_time)
+        execution_time = time_diff.total_seconds() * 1000
+    
+        # RF loss
+        r_squared.append(r2_score(rf_aux["RefSt"], rf_aux["RF_Pred"]))
+        rmse.append(mean_squared_error(rf_aux["RefSt"], rf_aux["RF_Pred"]))
+        mae.append(mean_absolute_error(rf_aux["RefSt"], rf_aux["RF_Pred"]))
+        rf_time_ms.append(execution_time)
+
+    rf_stats = pd.DataFrame({'n_estimators': n_estimators, 'r_squared': r_squared, 'rmse': rmse, 'mae': mae, 'rf_time_ms': rf_time_ms})
+    rf_stats = rf_stats.set_index('n_estimators') # index column (X axis for the plots)
+    print(rf_stats)
+
+    # plot
+    rf_stats[["r_squared"]].plot()
+    rf_stats[["rmse"]].plot()
+    rf_stats[["mae"]].plot()
+    rf_stats[["rf_time_ms"]].plot()
+
+# rf_stats()
 
 # %%
 # Gaussian Process
@@ -186,7 +233,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, RBF
 
 rbf = ConstantKernel(1.0) * RBF(length_scale=1.0)
-gp = GaussianProcessRegressor(kernel=rbf, alpha=0.4)
+gp = GaussianProcessRegressor(kernel=rbf, alpha=0)
 
 X = df[['Sensor_O3', 'Temp', 'RelHum']]
 Y = df['RefSt']

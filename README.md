@@ -25,7 +25,7 @@ The dataset consists in the data collected by an air pollution sensor in an air 
 The data is organized as follows:
 * date: Timestamp (UTC) for each measurement
 * RefSt: Reference Station O3 concentrations, in μgr/m<sup>3</sup> (real pollution levels)
-* Sensor O3: MOX sensor measurements, in KΩ (unaccured pollution levels)
+* Sensor O3: MOX sensor measurements, in KΩ (unaccurated pollution levels to be calibrated)
 * Temp: Temperature sensor, in °C
 * RelHum: Relative humidity sensor, in %
 
@@ -64,6 +64,8 @@ As we see in the plot, normalisation does not modify the original data shape.
 ![RefSt_RelHum_scatter](img/RefSt_RelHum_scatter.png)
 
 When comparing the plots with respect to **Sensor_O3** and with respect to **RefSt**, we see that the shape is similar but not the same, meaning that the data from the sensor is similar to the reference but not the same due to lack of calibration.
+
+Furthermore, both variables **Temp** and **RelHum** show on the plots that there is a correlation between them and the reference data **RefSt**, meaning that the combination of **Temp**, **RelHum** and **Sensor_O3** is a good base for making predictions and obtain results similar to true measurements **RefSt**. 
 
 ## Data calibration
 
@@ -132,6 +134,45 @@ The obtained loss functions for K-Nearest Neighbor with k=31 are:
 
 ### Random Forest
 
+There is one hyperparameter to be set in Random Forest: number of trees (estimators). To tune this parameter for this problem, some performance stats are calculated: **R_squared**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **n_estimators**, which ranges from 1 to 100.
+
+R<sup>2</sup> vs. n_estimators:
+
+![RF_Stats_r_squared](img/RF_Stats_r_squared.png)
+
+RMSE vs. n_estimators:
+
+![RF_Stats_rmse](img/RF_Stats_rmse.png)
+
+MAE vs. n_estimators:
+
+![RF_Stats_mae](img/RF_Stats_mae.png)
+
+Time (ms) vs. n_estimators:
+
+![RF_Stats_time](img/RF_Stats_time.png)
+
+As showed in the plots, any value for **n_estimators** &ge; 30 tend to stabilize the performance. Given that the time grows linearly as n_estimators increases, we conclude that an optimal value for n_estimators is 30.
+
+Hyperparameters setup:
+* Number of trees (estimators) = 30
+
+Obtained results:
+
+![RF_Pred](img/RF_Pred.png)
+
+![RF_Pred_scatter](img/RF_Pred_scatter.png)
+
+The obtained loss functions for Random Forest with the hyperparameters specified above are:
+* R-squared = 0.9928955668645113
+* RMSE = 12.489973333333332
+* MAE = 2.320866666666667
+
+Variable importances:
+* Sensor_O3: 0.8021535859094017
+* Temp: 0.17748165305476926
+* RelHum: 0.02036476103582912
+
 ### Kernel Regression
 
 #### RBF kernel
@@ -155,6 +196,8 @@ Hyperparameters setup:
 Training results:
 * Training time: 49 seconds
 * Minimum loss: 56.2758
+
+Obtained results:
 
 ![KNN_Pred](img/NN_Pred.png)
 
