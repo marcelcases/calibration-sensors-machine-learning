@@ -24,7 +24,7 @@ The dataset consists in the data collected by an air pollution sensor in an air 
 
 The data is organized as follows:
 * date: Timestamp (UTC) for each measurement
-* RefSt: Reference Station O3 concentrations, in μgr/m<sup>3</sup> (real pollution levels)
+* RefSt: Reference Station O<sub>3</sub> concentrations, in μgr/m<sup>3</sup> (real pollution levels)
 * Sensor O<sub>3</sub> : MOX sensor measurements, in KΩ (unaccurated pollution levels to be calibrated)
 * Temp: Temperature sensor, in °C
 * RelHum: Relative humidity sensor, in %
@@ -124,12 +124,12 @@ The values obtained by the fit function are:
 β<sub>2</sub> = 16.75646248  
 β<sub>3</sub> = -1.34007258  
 
-![MLR_SGDR_Pred](img/MLR_SGDR_Pred.png)
+![MLR_SGD_Pred](img/MLR_SGD_Pred.png)
 
-![MLR_SGDR_Pred_scatter](img/MLR_SGDR_Pred_scatter.png)
+![MLR_SGD_Pred_scatter](img/MLR_SGD_Pred_scatter.png)
 
 The obtained loss functions for Multiple Linear Regression with Stochastic Gradient Descent are:
- R-squared = 0.9200425392993397
+* R-squared = 0.9200425392993397
 * RMSE = 136.3191529197765
 * MAE = 9.344936428513078
 
@@ -340,6 +340,23 @@ The obtained loss functions for Neural Network with the hyperparameters specifie
 * R-squared = 0.9402881574652502
 * RMSE = 101.80247999732873
 * MAE = 8.050368747711182
+
+## Results analysis
+
+|                          Method                          | R<sup>2</sup> |      RMSE      |      MAE     |
+|:--------------------------------------------------------:|:-------------:|:--------------:|:------------:|
+|           Multiple Linear Regression (equation)          |    0.873251   |   216.092274   |   12.256238  |
+| Multiple Linear Regression (Stochastic Gradient Descent) |    0.920042   |   136.319152   |   9.344936   |
+|                    K-Nearest Neighbor                    |    0.925813   |   126.479542   |   8.276578   |
+|                       Random Forest                      |    0.922410   |   132.282037   |   8.930750   |
+|          Radial Basis Function Kernel Regression         |    0.918003   |   139.795103   |   9.241265   |
+|           Polynomial Function Kernel Regression          |    0.905521   |   161.075868   |   9.560374   |
+|          Radial Basis Function Gaussian Process          |    0.927524   |   123.563613   |   8.567122   |
+|           Dot Product Function Gaussian Process          |    0.914179   |   146.314715   |   9.706846   |
+|      Radial Basis Function Support Vector Regression     |    0.913281   |   147.845276   |   9.182623   |
+|             Linear Support Vector Regression             |    0.916297   |   142.703684   |   9.470719   |
+|           Polynomial Support Vector Regression           |    0.767888   |   395.725877   |   16.492567  |
+|                      Neural Network                      |  **0.940288** | **101.802479** | **8.050368** |
 
 ## Source code
 

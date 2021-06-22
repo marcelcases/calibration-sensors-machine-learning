@@ -94,28 +94,28 @@ plt.xticks(rotation=20)
 
 # %%
 # Raw scatter plot
-sns.lmplot(x = 'Sensor_O3', y = 'RefSt', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'Sensor_O3', y = 'RefSt', data = df, fit_reg=False, line_kws={'color': 'orange'}) 
 
 
 # %%
 # Normalised scatter plot
-sns.lmplot(x = 'normSensor_O3', y = 'normRefSt', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'normSensor_O3', y = 'normRefSt', data = df, fit_reg=False, line_kws={'color': 'orange'}) 
 
 # %%
 # Temp with respect to Sensor_O3
-sns.lmplot(x = 'Sensor_O3', y = 'Temp', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'Sensor_O3', y = 'Temp', data = df, fit_reg=False, line_kws={'color': 'orange'}) 
 
 # %%
 # Temp with respect to RefSt
-sns.lmplot(x = 'RefSt', y = 'Temp', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'Temp', data = df, fit_reg=False, line_kws={'color': 'orange'}) 
 
 # %%
 # RelHum with respect to Sensor_O3
-sns.lmplot(x = 'Sensor_O3', y = 'RelHum', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'Sensor_O3', y = 'RelHum', data = df, fit_reg=False, line_kws={'color': 'orange'}) 
 
 # %%
 # RelHum with respect to RefSt
-sns.lmplot(x = 'RefSt', y = 'RelHum', data = df, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'RelHum', data = df, fit_reg=False, line_kws={'color': 'orange'}) 
 
 
 # %%
@@ -178,17 +178,17 @@ print(sgdr.get_params())
 
 # Predict
 # df_test["MLR_SGDR_Pred"] = sgdr.intercept_ + sgdr.coef_[0]*X_test[0] + sgdr.coef_[1]*X_test[1] - sgdr.coef_[2]*X_test[2]
-df_test["MLR_SGDR_Pred"] = sgdr.predict(X_test)
+df_test["MLR_SGD_Pred"] = sgdr.predict(X_test)
 
 # Plot linear
-df_test[["RefSt", "MLR_SGDR_Pred"]].plot()
+df_test[["RefSt", "MLR_SGD_Pred"]].plot()
 plt.xticks(rotation=20)
 
 # Plot regression
-sns.lmplot(x = 'RefSt', y = 'MLR_SGDR_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'MLR_SGD_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
 
 # MLR loss
-loss_functions(y_true=df_test["RefSt"], y_pred=df_test["MLR_SGDR_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["MLR_SGD_Pred"])
 
 
 # %%
