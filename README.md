@@ -222,9 +222,43 @@ Variable importances:
 
 ### Kernel Regression
 
-#### RBF kernel
+Tested with kernels:
+* RBF kernel
+* Polynomial kernel
 
-#### Polynomial kernel
+Polynomial kernel hyperparameter setup:
+
+R<sup>2</sup> vs. polynomial degree:
+
+![KR_Poly_Stats_r_squared](img/KR_Poly_Stats_r_squared.png)
+
+RMSE vs. polynomial degree:
+
+![KR_Poly_Stats_rmse](img/KR_Poly_Stats_rmse.png)
+
+MAE vs. polynomial degree:
+
+![KR_Poly_Stats_mae](img/KR_Poly_Stats_mae.png)
+
+Time (ms) vs. polynomial degree:
+
+![KR_Poly_Stats_time](img/KR_Poly_Stats_time.png)
+
+
+Results:
+
+![KR_Pred](img/KR_Pred.png)
+
+![KR_RBF_Pred_scatter](img/KR_RBF_Pred_scatter.png)
+
+![KR_Poly_Pred_scatter](img/KR_Poly_Pred_scatter.png)
+
+The obtained loss functions for RBF and Polynomial Kernel Regression with the hyperparameters specified above are:
+
+| Kernel |    R<sup>2</sup>   |        RMSE        | MAE               |
+|:------:|:------------------:|:------------------:|-------------------|
+|   RBF  | **0.9180037342579421** | **139.79510342866496** | **9.241265994040084** |
+|  Poly  | 0.9055215854097209 | 161.07586875934803 | 9.56037412633461  |
 
 ### Gaussian Process
 

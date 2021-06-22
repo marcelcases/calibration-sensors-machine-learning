@@ -323,6 +323,79 @@ def rf_stats():
 
 rf_stats()
 
+
+# %%
+# Kernel Regression
+# from sklearn_extensions.kernel_regression import KernelRegression
+from sklearn.kernel_ridge import KernelRidge
+
+# Model
+kr_rbf = KernelRidge(kernel="rbf")
+kr_poly = KernelRidge(kernel="poly", degree=4)
+
+# Fit
+kr_rbf.fit(X_train, Y_train)
+kr_poly.fit(X_train, Y_train)
+
+# Predict
+df_test["KR_RBF_Pred"] = kr_rbf.predict(X_test)
+df_test["KR_Poly_Pred"] = kr_poly.predict(X_test)
+
+# Plot linear
+df_test[["RefSt", "KR_RBF_Pred", "KR_Poly_Pred"]].plot()
+plt.xticks(rotation=20)
+
+# Plot regression
+sns.lmplot(x = 'RefSt', y = 'KR_RBF_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'KR_Poly_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+
+# MLR loss
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["KR_RBF_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["KR_Poly_Pred"])
+
+
+# %%
+# Polynomial Kernel Regression stats vs. hyperparameters
+def kr_stats():
+    kr_aux = pd.DataFrame({'RefSt': Y_test})
+
+    degree = [*range(1, 26, 1)]
+    r_squared = []
+    rmse = []
+    mae = []
+    time_ms = []
+
+    for i in degree:
+        kr = KernelRidge(kernel="poly", degree=i)
+
+        # fit
+        start_time = float(datetime.datetime.now().strftime('%S.%f'))
+        kr.fit(X_train, Y_train)
+        end_time = float(datetime.datetime.now().strftime('%S.%f'))
+        execution_time = (end_time - start_time) * 1000
+
+        # predict
+        kr_aux["KR_Pred"] = kr.predict(X_test)
+
+        # RF loss
+        r_squared.append(r2_score(kr_aux["RefSt"], kr_aux["KR_Pred"]))
+        rmse.append(mean_squared_error(kr_aux["RefSt"], kr_aux["KR_Pred"]))
+        mae.append(mean_absolute_error(kr_aux["RefSt"], kr_aux["KR_Pred"]))
+        time_ms.append(execution_time)
+
+    kr_stats = pd.DataFrame({'degree': degree, 'r_squared': r_squared, 'rmse': rmse, 'mae': mae, 'time_ms': time_ms})
+    kr_stats = kr_stats.set_index('degree') # index column (X axis for the plots)
+    print(kr_stats)
+
+    # plot
+    kr_stats[["r_squared"]].plot()
+    kr_stats[["rmse"]].plot()
+    kr_stats[["mae"]].plot()
+    kr_stats[["time_ms"]].plot()
+
+kr_stats()
+
+
 # %%
 # Gaussian Process
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -450,6 +523,7 @@ from sklearn.preprocessing import StandardScaler
 
 print(tf.__version__)
 
+# Normalise data
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
