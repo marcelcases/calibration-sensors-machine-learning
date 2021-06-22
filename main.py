@@ -32,6 +32,17 @@ df_train = pd.DataFrame({'RefSt': Y_train, 'Sensor_O3': X_train["Sensor_O3"], 'T
 df_test = pd.DataFrame({'RefSt': Y_test, 'Sensor_O3': X_test["Sensor_O3"], 'Temp': X_test["Temp"], 'RelHum': X_test["RelHum"]})
 
 
+#%%
+# Loss functions definition
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+
+def loss_functions(y_true, y_pred):
+    print("Loss functions:")
+    print("* R-squared =", r2_score(y_true, y_pred))
+    print("* RMSE =", mean_squared_error(y_true, y_pred))
+    print("* MAE =", mean_absolute_error(y_true, y_pred))
+
+
 # %%
 # Normalise sensor data
 def normalize(col):
@@ -43,17 +54,6 @@ df["normRefSt"] = normalize(df["RefSt"])
 df["normSensor_O3"] = normalize(df["Sensor_O3"])
 df["normTemp"] = normalize(df["Temp"])
 df["normRelHum"] = normalize(df["RelHum"])
-
-
-#%%
-# Loss functions definition
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-
-def loss_functions(y_true, y_pred):
-    print("Loss functions:")
-    print("* R-squared =", r2_score(y_true, y_pred))
-    print("* RMSE =", mean_squared_error(y_true, y_pred))
-    print("* MAE =", mean_absolute_error(y_true, y_pred))
 
 
 #%%
@@ -158,7 +158,8 @@ from sklearn.linear_model import SGDRegressor
 from sklearn.preprocessing import StandardScaler
 
 # Model
-sgdr = SGDRegressor()
+# sgdr = SGDRegressor(loss='squared_loss', alpha=.001, tol=1e-5)
+sgdr = SGDRegressor(loss='squared_loss', max_iter=5)
 
 # Normalize
 sc = StandardScaler()
@@ -171,6 +172,9 @@ sgdr.fit(X_train, Y_train)
 # Get MLR coefficients
 print('Intercept: \n', sgdr.intercept_)
 print('Coefficients: \n', sgdr.coef_)
+print('Iters: \n', sgdr.n_iter_)
+print(sgdr.get_params())
+
 
 # Predict
 # df_test["MLR_SGDR_Pred"] = sgdr.intercept_ + sgdr.coef_[0]*X_test[0] + sgdr.coef_[1]*X_test[1] - sgdr.coef_[2]*X_test[2]
@@ -321,35 +325,120 @@ rf_stats()
 
 # %%
 # Gaussian Process
-# import numpy as np
-# from sklearn.gaussian_process import GaussianProcessRegressor
-# from sklearn.gaussian_process.kernels import ConstantKernel, RBF
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import ConstantKernel, RBF, DotProduct, WhiteKernel
 
-# rbf = ConstantKernel(1.0) * RBF(length_scale=1.0)
-# gp = GaussianProcessRegressor(kernel=rbf, alpha=0)
+# rbf = ConstantKernel(constant_value=1.0, constant_value_bounds=(1e-10, 1e10)) * RBF(length_scale=1.0, length_scale_bounds=(1e-10, 1e10))
+rbf = ConstantKernel() * RBF()
+dpwh = DotProduct() + WhiteKernel()
+gp_rbf = GaussianProcessRegressor(kernel=rbf, alpha=150, random_state=0)
+gp_dpwh = GaussianProcessRegressor(kernel=dpwh, alpha=150, random_state=0)
 
-# X = df[['Sensor_O3', 'Temp', 'RelHum']]
-# Y = df['RefSt']
+# fit
+gp_rbf.fit(X_train, Y_train)
+gp_dpwh.fit(X_train, Y_train)
 
-# # fit
-# gp.fit(X, Y)
+# predict
+df_test["GP_RBF_Pred"] = gp_rbf.predict(X_test)
+df_test["GP_DPWK_Pred"] = gp_dpwh.predict(X_test)
 
-# # predict
-# df["GP_Pred"] = gp.predict(X)
-
-# # Obtain optimized kernel parameters
+# Obtain optimized kernel parameters
 # l = gp.kernel_.k2.get_params()['length_scale']
 # sigma_f = np.sqrt(gp.kernel_.k1.get_params()['constant_value'])
 
-# # plot linear
-# df[["RefSt", "GP_Pred"]].plot()
-# plt.xticks(rotation=20)
+# print("Kernel params k1", gp.kernel_.k1.get_params())
+# print("Kernel params k2", gp.kernel_.k2.get_params())
 
-# # plot regression
-# sns.lmplot(x = 'RefSt', y = 'GP_Pred', data= df, fit_reg=True, line_kws={'color': 'orange'}) 
+# plot linear
+df_test[["RefSt", "GP_RBF_Pred", "GP_DPWK_Pred"]].plot()
+plt.xticks(rotation=20)
 
-# # GP loss
-# loss_functions(y_true=df["RefSt"], y_pred=df["GP_Pred"])
+# plot regression
+sns.lmplot(x = 'RefSt', y = 'GP_RBF_Pred', data= df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'GP_DPWK_Pred', data= df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+
+# GP loss
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["GP_RBF_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["GP_DPWK_Pred"])
+
+
+# %%
+# Gaussian Process stats vs. hyperparameters
+def gp_stats():
+    gp_aux = pd.DataFrame({'RefSt': Y_test})
+
+    alpha = [*range(5, 55, 5)]
+    # alpha = [1e-5,1e-4,1e-3,1e-2,1e-1,1,10,50,100,150,200]
+    r_squared = []
+    rmse = []
+    mae = []
+    time_ms = []
+
+    for i in alpha:
+        rbf = ConstantKernel(constant_value=1.0, constant_value_bounds=(1e-10, 1e10)) * RBF(length_scale=1.0, length_scale_bounds=(1e-10, 1e10))
+        gp = GaussianProcessRegressor(kernel=rbf, alpha=i, random_state=0)
+
+        # fit
+        start_time = float(datetime.datetime.now().strftime('%S.%f'))
+        gp.fit(X_train, Y_train)
+        end_time = float(datetime.datetime.now().strftime('%S.%f'))
+        execution_time = (end_time - start_time) * 1000
+
+        # predict
+        gp_aux["GP_Pred"] = gp.predict(X_test)
+
+        # RF loss
+        r_squared.append(r2_score(gp_aux["RefSt"], gp_aux["GP_Pred"]))
+        rmse.append(mean_squared_error(gp_aux["RefSt"], gp_aux["GP_Pred"]))
+        mae.append(mean_absolute_error(gp_aux["RefSt"], gp_aux["GP_Pred"]))
+        time_ms.append(execution_time)
+
+    gp_stats = pd.DataFrame({'alpha': alpha, 'r_squared': r_squared, 'rmse': rmse, 'mae': mae, 'time_ms': time_ms})
+    gp_stats = gp_stats.set_index('alpha') # index column (X axis for the plots)
+    print(gp_stats)
+
+    # plot
+    gp_stats[["r_squared"]].plot()
+    gp_stats[["rmse"]].plot()
+    gp_stats[["mae"]].plot()
+    gp_stats[["time_ms"]].plot()
+
+gp_stats()
+
+
+# %%
+# Support Vector Regression
+from sklearn.svm import SVR
+
+# Models
+svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1)
+svr_lin = SVR(kernel='linear', C=1e3)
+svr_poly = SVR(kernel='poly', C=1e3, degree=3)
+
+# Fit
+svr_rbf.fit(X_train, Y_train)
+svr_lin.fit(X_train, Y_train)
+svr_poly.fit(X_train, Y_train)
+
+# Predict
+df_test["SVR_RBF_Pred"] = svr_rbf.predict(X_test)
+df_test["SVR_Line_Pred"] = svr_lin.predict(X_test)
+df_test["SVR_Poly_Pred"] = svr_poly.predict(X_test)
+
+# Plot linear
+df_test[["RefSt", "SVR_RBF_Pred", "SVR_Line_Pred", "SVR_Poly_Pred"]].plot()
+plt.xticks(rotation=20)
+
+# Plot regression
+sns.lmplot(x = 'RefSt', y = 'SVR_RBF_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'SVR_Line_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+sns.lmplot(x = 'RefSt', y = 'SVR_Poly_Pred', data = df_test, fit_reg=True, line_kws={'color': 'orange'}) 
+
+# NN loss
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["SVR_RBF_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["SVR_Line_Pred"])
+loss_functions(y_true=df_test["RefSt"], y_pred=df_test["SVR_Poly_Pred"])
+
 
 
 # %%
@@ -380,11 +469,15 @@ nn.add(Dense(units = 1)) # Output layer
 nn.compile(optimizer = 'adam', loss = 'mean_squared_error')
 
 # Fit
-history = nn.fit(X_train, Y_train, batch_size = 10, epochs = 200)
+history = nn.fit(X_train, Y_train, batch_size = 10, epochs = 2000)
 
 # Plot loss
-# plt.plot(history.history['loss'])
-# plt.plot(history.history['val_loss'])
+plt.plot(history.history['loss'][5:])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+# plt.legend(['train', 'val'], loc='upper left')
+plt.show()
 
 # Predict
 df_test["NN_Pred"] = nn.predict(X_test)

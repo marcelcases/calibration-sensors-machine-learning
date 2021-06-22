@@ -1,10 +1,10 @@
 # Calibration of sensors in uncontrolled environments in Air Pollution Sensor Monitoring Networks
 
 The objective of this project is to calibrate an air pollution sensor in an air pollution monitoring sensor network by using different methods based on *machine learning* and *deep learning*:
-* Multiple linear regression (MLR)
-* K-nearest neighbor (KNN)
-* Random forest (RF)
-* Kernel regression (RBF and polynomial)
+* Multiple Linear Regression (MLR)
+* K-Nearest Neighbor (KNN)
+* Random Forest (RF)
+* Kernel Regression (RBF and polynomial)
 * Gaussian Process (GP)
 * Support Vector Regression (SVR)
 * Neural Network (NN)
@@ -25,13 +25,13 @@ The dataset consists in the data collected by an air pollution sensor in an air 
 The data is organized as follows:
 * date: Timestamp (UTC) for each measurement
 * RefSt: Reference Station O3 concentrations, in μgr/m<sup>3</sup> (real pollution levels)
-* Sensor O3: MOX sensor measurements, in KΩ (unaccurated pollution levels to be calibrated)
+* Sensor O<sub>3</sub> : MOX sensor measurements, in KΩ (unaccurated pollution levels to be calibrated)
 * Temp: Temperature sensor, in °C
 * RelHum: Relative humidity sensor, in %
 
 ## Data observation
 
-Plot of **ozone** (KOhms) and **ozone reference data** (μgr/m<sup>3</sup>) as function of time:
+Plot of **ozone** (*Sensor_O3*, KOhms) and **ozone reference data** (*RefSt*, μgr/m<sup>3</sup>) as function of time:
 
 ![Sensor_O3_RefSt](img/Sensor_O3_RefSt.png)
 
@@ -69,9 +69,9 @@ Furthermore, both variables **Temp** and **RelHum** show on the plots that there
 
 ## Data calibration
 
-A data calibration process must be carried out. To do that, the data captured by the network of three sensors (*Sensor_O3*, *Temp*, and *RelHum*, the **explanatory variables**) will be trained against reference data *RefSt* (the **response variable)** using different regression algorithms.
+A data calibration process must be carried out. To do that, the data captured by the network of three sensors (**Sensor_O3**, **Temp**, and **RelHum**, the *explanatory variables*) will be trained against reference data **RefSt** (the *response variable*) using different regression algorithms.
 
-For this purpose, the main dataset is splitted into two datasets (train and test), with proportions 80%/20%. Train dataset has 800 rows of information, while test dataset has 200 rows.
+For this purpose, the main dataset is splitted into two datasets (train and test), with proportions 80%-20%. Train dataset has 800 rows of information, while test dataset has 200 rows.
 
 The algorithms are trained using the train dataset (which contains data from the first 17 days), and the results (predictions, loss functions and plots) are calculated using the test dataset (which has data from the last 4 days).
 
@@ -115,11 +115,30 @@ The new scatterplot, when compared to the original (raw sensor data **Sensor_O3*
 
 ##### Stochastic
 
+The data has to be normalised to run a SGD algorithm.
+
+The values obtained by the fit function are:
+
+β<sub>0</sub> = 63.5838835  
+β<sub>1</sub> = 26.38886151  
+β<sub>2</sub> = 16.75646248  
+β<sub>3</sub> = -1.34007258  
+
+![MLR_SGDR_Pred](img/MLR_SGDR_Pred.png)
+
+![MLR_SGDR_Pred_scatter](img/MLR_SGDR_Pred_scatter.png)
+
+The obtained loss functions for Multiple Linear Regression with Stochastic Gradient Descent are:
+ R-squared = 0.9200425392993397
+* RMSE = 136.3191529197765
+* MAE = 9.344936428513078
+
+
 ##### Mini-batch
 
 ### K-Nearest Neighbor
 
-For a K-Nearest Neighbor regression, there is one hyperparameter to be set: number of neighbors (**n_neighbors**). To tune this parameter for this problem, some performance stats are calculated: **R_squared**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **n_neighbors**, which ranges from 1 to 150.
+For a K-Nearest Neighbor regression, there is one hyperparameter to be set: number of neighbors (**n_neighbors**). To tune this parameter for this problem, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **n_neighbors**, which ranges from 1 to 150.
 
 R<sup>2</sup> vs. n_neighbors:
 
@@ -162,7 +181,7 @@ The obtained loss functions for K-Nearest Neighbor with ``k=19`` are:
 
 ### Random Forest
 
-There is one hyperparameter to be set in Random Forest: number of trees (**n_estimators**). To tune this parameter for this problem, some performance stats are calculated: **R_squared**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **n_estimators**, which ranges from 1 to 100.
+There is one hyperparameter to be set in Random Forest: number of trees (**n_estimators**). To tune this parameter for this problem, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **n_estimators**, which ranges from 1 to 100.
 
 R<sup>2</sup> vs. n_estimators:
 
@@ -209,7 +228,39 @@ Variable importances:
 
 ### Gaussian Process
 
+Hyperparameters setup:
+* Kernel = RBF (Radial basis function)
+* alpha = 150
+
+![GP_Pred](img/GP_Pred.png)
+
+![GP_RBF_Pred_scatter](img/GP_RBF_Pred_scatter.png)
+
+![GP_DPWK_Pred_scatter](img/GP_DPWK_Pred_scatter.png)
+
+The obtained loss functions for Gaussian Process with RBF kernel and dot product, and with the hyperparameters specified above are:
+
+| Kernel |    R<sup>2</sup>   |        RMSE       | MAE               |
+|:------:|:------------------:|:-----------------:|-------------------|
+|   RBF  | **0.9275242503753743** | **123.5636138201321** | **8.567122982155226** |
+|   Dot  |  0.914179681530673 | 146.3147155315738 | 9.706846921532744 |
+
 ### Support Vector Regression
+
+![SVR_Pred](img/SVR_Pred.png)
+
+![SVR_RBF_Pred_scatter](img/SVR_RBF_Pred_scatter.png)
+
+![SVR_Line_Pred_scatter](img/SVR_Line_Pred_scatter.png)
+
+![SVR_Poly_Pred_scatter](img/SVR_Poly_Pred_scatter.png)
+
+
+|   Kernel   |    R<sup>2</sup>   |        RMSE        | MAE                |
+|:----------:|:------------------:|:------------------:|--------------------|
+|     RBF    | 0.9132819370511462 |  147.8452764812975 | **9.182623447099163**  |
+|   Linear   | **0.9162977175262185** |  **142.7036844878632** | 9.47071994717607   |
+| Polynomial | 0.7678885494815302 | 395.72587774035094 | 16.492567958747035 |
 
 ### Neural Network
 
@@ -234,18 +285,22 @@ Some tests were made with the batch size, and a value of 10 turns out to be the 
 Hyperparameters setup summary:
 * Number of hidden layers Nh = 5
 * Neurons per layer = 64
-* Epochs = 200
+* Epochs = 2000
 * Batch size = 10
 
+The training process has to be done with normalised values of the data.
+
 Training results:
-* Training time: 49 seconds
-* Minimized loss: 39.6488
+* Training time: 6m 15s
+* Minimized loss: 8.22032
 
 Obtained results:
 
-![KNN_Pred](img/NN_Pred.png)
+![NN_Pred](img/NN_Pred.png)
 
-![KNN_Pred_scatter](img/NN_Pred_scatter.png)
+![NN_Pred_scatter](img/NN_Pred_scatter.png)
+
+![NN_loss](img/NN_loss.png)
 
 The obtained loss functions for Neural Network with the hyperparameters specified above are:
 * R-squared = 0.9402881574652502
@@ -262,3 +317,5 @@ Task statement
 Barceló-Ordinas, Doudou, Garcia-Vidal, Badache. *Self-calibration methods for uncontrolled environments in sensor networks: A reference survey*  
 Badura, Batog, Drzeniecka, Modzel. *Regression methods in the calibration of low‑cost sensors for ambient particulate matter measurements*  
 Pandas documentation [pandas.pydata.org/docs/](https://pandas.pydata.org/docs/)  
+Sklearn documentation [scikit-learn.org/stable/modules/classes.html](https://scikit-learn.org/stable/modules/classes.html)  
+Tensorflow documentation [tensorflow.org/api_docs/python/tf](https://www.tensorflow.org/api_docs/python/tf)  
