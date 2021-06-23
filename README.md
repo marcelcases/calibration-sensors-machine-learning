@@ -4,7 +4,7 @@ The objective of this project is to calibrate an air pollution sensor in an air 
 * Multiple Linear Regression (MLR)
 * K-Nearest Neighbor (KNN)
 * Random Forest (RF)
-* Kernel Regression (RBF and polynomial)
+* Kernel Regression (KR)
 * Gaussian Process (GP)
 * Support Vector Regression (SVR)
 * Neural Network (NN)
@@ -23,11 +23,11 @@ June 2021
 The dataset consists in the data collected by an air pollution sensor in an air pollution monitoring sensor network. It contains 1000 samples.
 
 The data is organized as follows:
-* date: Timestamp (UTC) for each measurement
-* RefSt: Reference Station O<sub>3</sub> concentrations, in μgr/m<sup>3</sup> (real pollution levels)
-* Sensor O<sub>3</sub> : MOX sensor measurements, in KΩ (unaccurated pollution levels to be calibrated)
-* Temp: Temperature sensor, in °C
-* RelHum: Relative humidity sensor, in %
+* *date*: Timestamp (UTC) for each measurement
+* *RefSt*: Reference Station O<sub>3</sub> concentrations, in μgr/m<sup>3</sup> (real pollution levels)
+* *Sensor_O3* : MOx sensor measurements, in KΩ (unaccurated pollution levels to be calibrated)
+* *Temp*: Temperature sensor, in °C
+* *RelHum*: Relative humidity sensor, in %
 
 ## Data observation
 
@@ -69,15 +69,18 @@ Furthermore, both variables **Temp** and **RelHum** show on the plots that there
 
 ## Data calibration
 
-A data calibration process must be carried out. To do that, the data captured by the network of three sensors (**Sensor_O3**, **Temp**, and **RelHum**, the *explanatory variables*) will be trained against reference data **RefSt** (the *response variable*) using different regression algorithms.
+A data calibration process must be performed. To do that, data captured by the network of three sensors (**Sensor_O3**, **Temp**, and **RelHum**, the *explanatory variables*) will be trained against reference data **RefSt** (the *response variable*) using different regression algorithms.
 
-For this purpose, the main dataset is splitted into two datasets (train and test), with proportions 80%-20%. Train dataset has 800 rows of information, while test dataset has 200 rows.
+For this purpose, the main dataset is splitted into two datasets (train and test), with **proportions 80%-20%**. Train dataset has 800 rows of information, while test dataset has 200 rows. Given that the dataset contains data from 21 consecutive days, we assume that the **data does not have seasonality**. This is why data split is made without shuffling.
 
 The algorithms are trained using the train dataset (which contains data from the first 17 days), and the results (predictions, loss functions and plots) are calculated using the test dataset (which has data from the last 4 days).
 
 ![Train_Test](img/Train_Test.png)
 
-To check performance and later compare them, some regression loss function values are calculated for each method: **R-square** R<sup>2</sup>, **Root-mean-square deviation** RMSE, and **Mean absolute error** MAE.
+To check performance and later compare them, some **regression loss function** values are calculated for each method:
+* *Coefficient of determination* R<sup>2</sup>: determines to what extent the variance of one variable explains the variance of the second variable
+* *Root-mean-square error* RMSE:  the standard deviation of the residuals (prediction errors)
+* *Mean absolute error* MAE: a measure of errors between paired observations expressing the same phenomenon
 
 ### Multiple Linear Regression
 
@@ -88,13 +91,12 @@ The most widely used equation to predict levels of ozone is a linear combination
 Pred = β<sub>0</sub> + β<sub>1</sub>·Sensor_O3 + β<sub>2</sub>·Temp + β<sub>3</sub>·RelHum
 
 By using `sklearn`'s linear regression fit function, we obtain the values:
+* β<sub>0</sub> = -41.76274629511223  
+* β<sub>1</sub> = 0.15859004  
+* β<sub>2</sub> = 2.61759675  
+* β<sub>3</sub> = 0.05330829  
 
-β<sub>0</sub> = -41.76274629511223  
-β<sub>1</sub> = 0.15859004  
-β<sub>2</sub> = 2.61759675  
-β<sub>3</sub> = 0.05330829  
-
-The graph below compares the **concentration at the reference station** with the obtained **predicted values** after calibration with Multiple Linear Regression.
+The graph below compares the **real concentration levels at the reference station** (*RefSt*) with the obtained **predicted values** (*MLR_Pred*) after calibration with Multiple Linear Regression.
 
 ![MLR_Pred](img/MLR_Pred.png)
 
@@ -103,33 +105,38 @@ To compare the predicted data with the reference, we draw a scatterplot with a l
 ![MLR_Pred_scatter](img/MLR_Pred_scatter.png)
 
 The obtained loss functions for Multiple Linear Regression are:
-* R-squared = 0.8732519296681992
+* R<sup>2</sup> = 0.8732519296681992
 * RMSE = 216.09227494770417
 * MAE = 12.256238765981713
 
-The new scatterplot, when compared to the original (raw sensor data **Sensor_O3** vs. reference **RefSt**), shows a thinner concentration as it fits better to a line shape, although it is not totally linear yet.
+The new scatterplot, when compared to the original (raw sensor data **Sensor_O3** vs. reference **RefSt**), shows a thinner concentration as it fits better to a line shape, although it is not totally linear.
 
-#### With gradient descent method
+#### With Gradient Descent method
 
 ##### Batch
 
 ##### Stochastic
 
+ Stochastic Gradient Descent is well suited for regression problems with a large number of training samples (>10.000), authough it is suitable for smaller sets.
+
 The data has to be normalised to run a SGD algorithm.
 
 The values obtained by the fit function are:
+* β<sub>0</sub> = 63.5838835  
+* β<sub>1</sub> = 26.38886151  
+* β<sub>2</sub> = 16.75646248  
+* β<sub>3</sub> = -1.34007258  
 
-β<sub>0</sub> = 63.5838835  
-β<sub>1</sub> = 26.38886151  
-β<sub>2</sub> = 16.75646248  
-β<sub>3</sub> = -1.34007258  
+MLR with SGD prediction:
 
 ![MLR_SGD_Pred](img/MLR_SGD_Pred.png)
+
+MLR with SGD correlation:
 
 ![MLR_SGD_Pred_scatter](img/MLR_SGD_Pred_scatter.png)
 
 The obtained loss functions for Multiple Linear Regression with Stochastic Gradient Descent are:
-* R-squared = 0.9200425392993397
+* R<sup>2</sup> = 0.9200425392993397
 * RMSE = 136.3191529197765
 * MAE = 9.344936428513078
 
@@ -138,34 +145,36 @@ The obtained loss functions for Multiple Linear Regression with Stochastic Gradi
 
 ### K-Nearest Neighbor
 
-For a K-Nearest Neighbor regression, there is one hyperparameter to be set: number of neighbors (**n_neighbors**). To tune this parameter for this problem, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **n_neighbors**, which ranges from 1 to 150.
+K-Nearest Neighbor takes the k-nearest data points and averages them to create a regression (or classification). Choosing the right *k* (number of neighbors) is key to find the best approximation.
 
-R<sup>2</sup> vs. n_neighbors:
+For a KNN regression, the hyperparameter to be set is the **number of neighbors** (*k*). To tune this parameter, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **k**, which ranges from 1 to 150.
+
+R<sup>2</sup> vs. number of neighbors *k*:
 
 ![KNN_Stats_r_squared](img/KNN_Stats_r_squared.png)
 
-RMSE vs. n_neighbors:
+RMSE vs. number of neighbors *k*:
 
 ![KNN_Stats_rmse](img/KNN_Stats_rmse.png)
 
-MAE vs. n_neighbors:
+MAE vs. number of neighbors *k*:
 
 ![KNN_Stats_mae](img/KNN_Stats_mae.png)
 
-Time (ms) vs. n_neighbors:
+Time (ms) vs. number of neighbors *k*:
 
 ![KNN_Stats_time](img/KNN_Stats_time.png)
 
 As showed in the plots, a value of *k* around 20 will optimize the performance, as the loss will be minimal.
 
-To choose the optimal value of *k* (number of neighbors), some guidelines have been set. It is recommended to choose k = sqrt(n), as long as it fulfills:
-* k value should be odd
-* k value must not be multiples of the number of classes
+There are also some guidelines to choose the optimal value of *k*. It is recommended to choose *k ≈ sqrt(n)*, being *n* the size of the train dataset. It should fulfill:
+* *k* value should be odd
+* *k* value must not be multiples of the number of classes
 * should not be too small or too large
 
 Increasing *k* too much will tend to smooth graph boundaries and will avoiding overfitting at the cost of some resolution on the predicted output.
 
-The computing time is not a constraint, as increasing the number of neighbors does not increase the execution time (it remains constant).
+The computing time is not a constraint, as increasing the number of neighbors does not increase the execution time (it remains constant to 2ms or 3ms for any value of *k*).
 
 With these considerations and the results of the optimization, *k* is set to 19, and the results below are obtained:
 
@@ -173,15 +182,17 @@ With these considerations and the results of the optimization, *k* is set to 19,
 
 ![KNN_Pred_scatter](img/KNN_Pred_scatter.png)
 
-The obtained loss functions for K-Nearest Neighbor with ``k=19`` are:
-* R-squared = 0.9258139236698661
+The obtained loss functions for K-Nearest Neighbor with ``k = 19`` are:
+* R<sup>2</sup> = 0.9258139236698661
 * RMSE = 126.47954293628808
 * MAE = 8.27657894736842
 
 
 ### Random Forest
 
-There is one hyperparameter to be set in Random Forest: number of trees (**n_estimators**). To tune this parameter for this problem, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **n_estimators**, which ranges from 1 to 100.
+Random Forest is an ensemble method for regression that combines the predictions from multiple machine learning algorithms. It returns the mean or average prediction of the individual trees to make predictions. The trees in random forests run in parallel, having no interaction among trees when building them.
+
+There is one hyperparameter to be set in Random Forest: **number of trees** (*n_estimators*). To tune this parameter for this problem, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators *n_estimators*, which ranges from 1 to 100.
 
 R<sup>2</sup> vs. n_estimators:
 
@@ -199,10 +210,7 @@ Time (ms) vs. n_estimators:
 
 ![RF_Stats_time](img/RF_Stats_time.png)
 
-As showed in the plots, any value for **n_estimators** &ge; 20 tend to stabilize the performance. Given that the time grows linearly as n_estimators increases, we conclude that an optimal value for n_estimators is 20.
-
-Hyperparameters setup:
-* Number of trees (estimators) = 20
+As showed in the plots, any value for *n_estimators* &ge; 20 tend to stabilize the performance. Given that the time grows linearly as *n_estimators* increases, it can be concluded that an optimal value for **number of trees** (*n_estimators*) is 20.
 
 Obtained results:
 
@@ -211,22 +219,22 @@ Obtained results:
 ![RF_Pred_scatter](img/RF_Pred_scatter.png)
 
 The obtained loss functions for Random Forest with the hyperparameters specified above are:
-* R-squared = 0.922410493402684
+* R<sup>2</sup> = 0.922410493402684
 * RMSE = 132.2820375
 * MAE = 8.93075
 
 Variable importances:
-* Sensor_O3: 0.7884045574615424
-* Temp: 0.19142880544508606
-* RelHum: 0.020166637093371624
+* *Sensor_O3*: 78.9%
+* *Temp*: 19.1%
+* *RelHum*: 2%
 
 ### Kernel Regression
 
-Tested with kernels:
-* RBF kernel
+Two kernel regression methods are tested:
+* Radial basis function kernel (RBF)
 * Polynomial kernel
 
-Polynomial kernel hyperparameter setup:
+Polynomial kernel has one hyperparameter, which is the **polynomial degree**. To choose the degree, some performance tests are made for a range of degree from 1 to 25:
 
 R<sup>2</sup> vs. polynomial degree:
 
@@ -244,12 +252,15 @@ Time (ms) vs. polynomial degree:
 
 ![KR_Poly_Stats_time](img/KR_Poly_Stats_time.png)
 
-
-Results:
+The polynomial degree is set to 4, and the results below are obtained:
 
 ![KR_Pred](img/KR_Pred.png)
 
+RBF kernel vs. RefSt:
+
 ![KR_RBF_Pred_scatter](img/KR_RBF_Pred_scatter.png)
+
+Polynomial kernel vs. RefSt:
 
 ![KR_Poly_Pred_scatter](img/KR_Poly_Pred_scatter.png)
 
@@ -258,17 +269,25 @@ The obtained loss functions for RBF and Polynomial Kernel Regression with the hy
 | Kernel |    R<sup>2</sup>   |        RMSE        | MAE               |
 |:------:|:------------------:|:------------------:|-------------------|
 |   RBF  | **0.9180037342579421** | **139.79510342866496** | **9.241265994040084** |
-|  Poly  | 0.9055215854097209 | 161.07586875934803 | 9.56037412633461  |
+|  Polynomial  | 0.9055215854097209 | 161.07586875934803 | 9.56037412633461  |
+
+RBF kernel has a slightly better performance when compared to polynomial kernel.
 
 ### Gaussian Process
 
-Hyperparameters setup:
-* Kernel = RBF (Radial basis function)
-* alpha = 150
+Gaussian Process regression is used with two kernels:
+* RBF
+* Dot product (linear)
+
+A value of `alpha = 150` gives a good performance to both methods, especially to RBF, with the results below:
 
 ![GP_Pred](img/GP_Pred.png)
 
+RBF kernel vs. RefSt:
+
 ![GP_RBF_Pred_scatter](img/GP_RBF_Pred_scatter.png)
+
+Dot product kernel vs. RefSt:
 
 ![GP_DPWK_Pred_scatter](img/GP_DPWK_Pred_scatter.png)
 
@@ -279,22 +298,38 @@ The obtained loss functions for Gaussian Process with RBF kernel and dot product
 |   RBF  | **0.9275242503753743** | **123.5636138201321** | **8.567122982155226** |
 |   Dot  |  0.914179681530673 | 146.3147155315738 | 9.706846921532744 |
 
+RBF outperforms dot product kernel.
+
 ### Support Vector Regression
+
+Support Vector Regression is used with three kernels:
+* RBF
+* Linear
+* Polynomial, degree 3
+
+Results:
 
 ![SVR_Pred](img/SVR_Pred.png)
 
+SVR with RBF kernel vs. RefSt:
+
 ![SVR_RBF_Pred_scatter](img/SVR_RBF_Pred_scatter.png)
+
+SVR with linear kernel vs. RefSt:
 
 ![SVR_Line_Pred_scatter](img/SVR_Line_Pred_scatter.png)
 
+SVR with polynomial kernel vs. RefSt:
+
 ![SVR_Poly_Pred_scatter](img/SVR_Poly_Pred_scatter.png)
 
+Performance results:
 
 |   Kernel   |    R<sup>2</sup>   |        RMSE        | MAE                |
 |:----------:|:------------------:|:------------------:|--------------------|
-|     RBF    | 0.9132819370511462 |  147.8452764812975 | **9.182623447099163**  |
-|   Linear   | **0.9162977175262185** |  **142.7036844878632** | 9.47071994717607   |
-| Polynomial | 0.7678885494815302 | 395.72587774035094 | 16.492567958747035 |
+|     RBF    | 0.9356650868795593 |  109.68433443101408 | 8.085332236192567  |
+|   Linear   | **0.9397667230676832** |  **102.69147140296738** | **7.938243017342343**   |
+| Polynomial | 0.9267388675016871 | 124.90260992031536 | 9.03009598862447 |
 
 ### Neural Network
 
@@ -312,21 +347,25 @@ Where:
 
 With these guidelines, the number of hidden layers is set to 5 and the number of neurons per layer is set to 64.
 
-Regarding the number of epochs, after approximately 150 epochs the loss is stabilized, so it is set to 200.
+Regarding the number of epochs, after approximately 750 epochs the loss is stabilized:
+
+![NN_loss](img/NN_loss.png)
+
+Thus the loss is set to 750.
 
 Some tests were made with the batch size, and a value of 10 turns out to be the one that provides better results.
 
 Hyperparameters setup summary:
 * Number of hidden layers Nh = 5
 * Neurons per layer = 64
-* Epochs = 2000
+* Epochs = 750
 * Batch size = 10
 
 The training process has to be done with normalised values of the data.
 
 Training results:
-* Training time: 6m 15s
-* Minimized loss: 8.22032
+* Training time: 2m 15s
+* Minimized loss: 19.664
 
 Obtained results:
 
@@ -334,14 +373,14 @@ Obtained results:
 
 ![NN_Pred_scatter](img/NN_Pred_scatter.png)
 
-![NN_loss](img/NN_loss.png)
-
 The obtained loss functions for Neural Network with the hyperparameters specified above are:
-* R-squared = 0.9402881574652502
+* R<sup>2</sup> = 0.9402881574652502
 * RMSE = 101.80247999732873
 * MAE = 8.050368747711182
 
-## Results analysis
+## Results summary
+
+The table below shows the performance results of each method obtained in the calibration process:
 
 |                          Method                          | R<sup>2</sup> |      RMSE      |      MAE     |
 |:--------------------------------------------------------:|:-------------:|:--------------:|:------------:|
@@ -353,10 +392,20 @@ The obtained loss functions for Neural Network with the hyperparameters specifie
 |           Polynomial Function Kernel Regression          |    0.905521   |   161.075868   |   9.560374   |
 |          Radial Basis Function Gaussian Process          |    0.927524   |   123.563613   |   8.567122   |
 |           Dot Product Function Gaussian Process          |    0.914179   |   146.314715   |   9.706846   |
-|      Radial Basis Function Support Vector Regression     |    0.913281   |   147.845276   |   9.182623   |
-|             Linear Support Vector Regression             |    0.916297   |   142.703684   |   9.470719   |
-|           Polynomial Support Vector Regression           |    0.767888   |   395.725877   |   16.492567  |
-|                      Neural Network                      |  **0.940288** | **101.802479** | **8.050368** |
+|      Radial Basis Function Support Vector Regression     |    0.935665   |   109.684334   |   8.085332   |
+|             Linear Support Vector Regression             |    0.939766   |   102.691471   | **7.938243** |
+|           Polynomial Support Vector Regression           |    0.926738   |   124.902609   |   9.030095   |
+|                      Neural Network                      |  **0.940288** | **101.802479** |   8.050368   |
+
+Regarding the results, the top three regression methods according to their prediction performance are:
+
+| Ranking |                    Method                    |    R<sup>2</sup>    |    RMSE    |    MAE   |
+|:-------:|:--------------------------------------------:|:--------:|:----------:|:--------:|
+|  Top 1  |                Neural Network                | **0.940288** | **101.802479** | 8.050368 |
+|  Top 2  | Support Vector Regression with linear kernel | 0.939766 | 102.691471 | **7.938243** |
+|  Top 3  |   Support Vector Regression with RBF kernel  | 0.935665 | 109.684334 | 8.085332 |
+
+The Neural Network seems to provide a slightly better performance when compared to Support Vector Regression. Given that the stats are so similar, for this particular problem I would choose SVR with linear kernel, as the process is more deterministic than a NN. That is, in SVR, the performance results are always the same for each run (same R<sup>2</sup>, RMSE and MAE), but in the NN, these stats may change for each run because part of the process is randomized.
 
 ## Source code
 
