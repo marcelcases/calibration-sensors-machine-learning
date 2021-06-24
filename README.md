@@ -31,7 +31,7 @@ The data is organized as follows:
 
 ## Data observation
 
-Plot of **ozone** (*Sensor_O3*, KOhms) and **ozone reference data** (*RefSt*, μgr/m<sup>3</sup>) as function of time:
+Plot of **ozone sensor** (*Sensor_O3*, KOhms) and **ozone reference data** (*RefSt*, μgr/m<sup>3</sup>) as function of time:
 
 ![Sensor_O3_RefSt](img/Sensor_O3_RefSt.png)
 
@@ -47,29 +47,29 @@ These data can be **normalised** to standarize the information, which originally
 
 As we see in the plot, normalisation does not modify the original data shape.
 
-**Temp** with respect to **Sensor_O3**:
+*Temp* with respect to *Sensor_O3*:
 
 ![Sensor_O3_Temp_scatter](img/Sensor_O3_Temp_scatter.png)
 
-**Temp** with respect to **RefSt**:
+*Temp* with respect to *RefSt*:
 
 ![RefSt_Temp_scatter](img/RefSt_Temp_scatter.png)
 
-**RelHum** with respect to **Sensor_O3**:
+*RelHum* with respect to *Sensor_O3*:
 
 ![Sensor_O3_RelHum_scatter](img/Sensor_O3_RelHum_scatter.png)
 
-**RelHum** with respect to **RefSt**:
+*RelHum* with respect to *RefSt*:
 
 ![RefSt_RelHum_scatter](img/RefSt_RelHum_scatter.png)
 
-When comparing the plots with respect to **Sensor_O3** and with respect to **RefSt**, we see that the shape is similar but not the same, meaning that the data from the sensor is similar to the reference but not the same due to lack of calibration.
+When comparing the plots with respect to *Sensor_O3* and with respect to *RefSt*, we see that the shape is similar but not the same, meaning that the data from the sensor is similar to the reference but not the same due to lack of calibration.
 
-Furthermore, both variables **Temp** and **RelHum** show on the plots that there is a correlation between them and the reference data **RefSt**, meaning that the combination of **Temp**, **RelHum** and **Sensor_O3** is a good base for making predictions and obtain results similar to true measurements **RefSt**. 
+Furthermore, both variables *Temp* and *RelHum* show on the plots that there is a correlation between them and the reference data *RefSt*, meaning that the combination of *Temp*, *RelHum* and *Sensor_O3* is a good base for making predictions and obtain results similar to true measurements *RefSt*. 
 
 ## Data calibration
 
-A data calibration process must be performed. To do that, data captured by the network of three sensors (**Sensor_O3**, **Temp**, and **RelHum**, the *explanatory variables*) will be trained against reference data **RefSt** (the *response variable*) using different regression algorithms.
+A data calibration process must be performed. To do that, data captured by the network of three sensors (*Sensor_O3*, *Temp*, and *RelHum*, the **explanatory variables**) will be trained against reference data *RefSt* (the **response variable**) using different regression algorithms.
 
 For this purpose, the main dataset is splitted into two datasets (train and test), with **proportions 80%-20%**. Train dataset has 800 rows of information, while test dataset has 200 rows. Given that the dataset contains data from 21 consecutive days, we assume that the **data does not have seasonality**. This is why data split is made without shuffling.
 
@@ -109,13 +109,9 @@ The obtained loss functions for Multiple Linear Regression are:
 * RMSE = 216.09227494770417
 * MAE = 12.256238765981713
 
-The new scatterplot, when compared to the original (raw sensor data **Sensor_O3** vs. reference **RefSt**), shows a thinner concentration as it fits better to a line shape, although it is not totally linear.
+The new scatterplot, when compared to the original (raw sensor data *Sensor_O3* vs. reference *RefSt*), shows a thinner concentration as it fits better to a line shape, although it is not totally linear.
 
-#### With Gradient Descent method
-
-##### Batch
-
-##### Stochastic
+#### With Stochastic Gradient Descent
 
  Stochastic Gradient Descent is well suited for regression problems with a large number of training samples (>10.000), authough it is suitable for smaller sets.
 
@@ -140,14 +136,11 @@ The obtained loss functions for Multiple Linear Regression with Stochastic Gradi
 * RMSE = 136.3191529197765
 * MAE = 9.344936428513078
 
-
-##### Mini-batch
-
 ### K-Nearest Neighbor
 
-K-Nearest Neighbor takes the k-nearest data points and averages them to create a regression (or classification). Choosing the right *k* (number of neighbors) is key to find the best approximation.
+K-Nearest Neighbor takes the k-nearest data points and averages them to create a regression (or classification, for other applications). Choosing the right *k* (number of neighbors) is key to find the best approximation.
 
-For a KNN regression, the hyperparameter to be set is the **number of neighbors** (*k*). To tune this parameter, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators **k**, which ranges from 1 to 150.
+For a KNN regression, the hyperparameter to be set is the **number of neighbors** (*k*). To tune this parameter, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators *k*, which ranges from 1 to 150.
 
 R<sup>2</sup> vs. number of neighbors *k*:
 
@@ -167,7 +160,7 @@ Time (ms) vs. number of neighbors *k*:
 
 As showed in the plots, a value of *k* around 20 will optimize the performance, as the loss will be minimal.
 
-There are also some guidelines to choose the optimal value of *k*. It is recommended to choose *k ≈ sqrt(n)*, being *n* the size of the train dataset. It should fulfill:
+There are also some guidelines to choose the optimal value of *k*. It is recommended to choose *k ≈ sqrt(n)*, being *n* the size of the train dataset. The following rules should be fulfilled:
 * *k* value should be odd
 * *k* value must not be multiples of the number of classes
 * should not be too small or too large
@@ -176,7 +169,7 @@ Increasing *k* too much will tend to smooth graph boundaries and will avoiding o
 
 The computing time is not a constraint, as increasing the number of neighbors does not increase the execution time (it remains constant to 2ms or 3ms for any value of *k*).
 
-With these considerations and the results of the optimization, *k* is set to 19, and the results below are obtained:
+With these considerations and the results of the optimization, *k* is set to 19 neighbors, and the results below are obtained:
 
 ![KNN_Pred](img/KNN_Pred.png)
 
@@ -194,19 +187,19 @@ Random Forest is an ensemble method for regression that combines the predictions
 
 There is one hyperparameter to be set in Random Forest: **number of trees** (*n_estimators*). To tune this parameter for this problem, some performance stats are calculated: **R<sup>2</sup>**, **RMSE**, **MAE**, and **time to solve** (in ms). These parameters are plotted against the number of estimators *n_estimators*, which ranges from 1 to 100.
 
-R<sup>2</sup> vs. n_estimators:
+R<sup>2</sup> vs. *n_estimators*:
 
 ![RF_Stats_r_squared](img/RF_Stats_r_squared.png)
 
-RMSE vs. n_estimators:
+RMSE vs. *n_estimators*:
 
 ![RF_Stats_rmse](img/RF_Stats_rmse.png)
 
-MAE vs. n_estimators:
+MAE vs. *n_estimators*:
 
 ![RF_Stats_mae](img/RF_Stats_mae.png)
 
-Time (ms) vs. n_estimators:
+Time (ms) vs. *n_estimators*:
 
 ![RF_Stats_time](img/RF_Stats_time.png)
 
@@ -256,11 +249,11 @@ The polynomial degree is set to 4, and the results below are obtained:
 
 ![KR_Pred](img/KR_Pred.png)
 
-RBF kernel vs. RefSt:
+RBF kernel vs. *RefSt*:
 
 ![KR_RBF_Pred_scatter](img/KR_RBF_Pred_scatter.png)
 
-Polynomial kernel vs. RefSt:
+Polynomial kernel vs. *RefSt*:
 
 ![KR_Poly_Pred_scatter](img/KR_Poly_Pred_scatter.png)
 
@@ -279,15 +272,15 @@ Gaussian Process regression is used with two kernels:
 * RBF
 * Dot product (linear)
 
-A value of `alpha = 150` gives a good performance to both methods, especially to RBF, with the results below:
+Alpha is a value added to the diagonal of the kernel matrix during fitting, ensuring that the calculated values form a positive definite matrix. A value of `alpha = 150` gives a good performance at an acceptable computing time to both methods, especially to RBF, with the results below:
 
 ![GP_Pred](img/GP_Pred.png)
 
-RBF kernel vs. RefSt:
+RBF kernel vs. *RefSt*:
 
 ![GP_RBF_Pred_scatter](img/GP_RBF_Pred_scatter.png)
 
-Dot product kernel vs. RefSt:
+Dot product kernel vs. *RefSt*:
 
 ![GP_DPWK_Pred_scatter](img/GP_DPWK_Pred_scatter.png)
 
@@ -311,15 +304,15 @@ Results:
 
 ![SVR_Pred](img/SVR_Pred.png)
 
-SVR with RBF kernel vs. RefSt:
+SVR with RBF kernel vs. *RefSt*:
 
 ![SVR_RBF_Pred_scatter](img/SVR_RBF_Pred_scatter.png)
 
-SVR with linear kernel vs. RefSt:
+SVR with linear kernel vs. *RefSt*:
 
 ![SVR_Line_Pred_scatter](img/SVR_Line_Pred_scatter.png)
 
-SVR with polynomial kernel vs. RefSt:
+SVR with polynomial kernel vs. *RefSt*:
 
 ![SVR_Poly_Pred_scatter](img/SVR_Poly_Pred_scatter.png)
 
@@ -344,6 +337,7 @@ Where:
 * Ns is size of the dataset
 * Ni is number of input neurons
 * No is number of output neurons
+* α is an arbitrary scaling factor (from 2 to 10)
 
 With these guidelines, the number of hidden layers is set to 5 and the number of neurons per layer is set to 64.
 
@@ -351,7 +345,7 @@ Regarding the number of epochs, after approximately 750 epochs the loss is stabi
 
 ![NN_loss](img/NN_loss.png)
 
-Thus the loss is set to 750.
+Thus the number of epochs is set to 750.
 
 Some tests were made with the batch size, and a value of 10 turns out to be the one that provides better results.
 
@@ -360,6 +354,10 @@ Hyperparameters setup summary:
 * Neurons per layer = 64
 * Epochs = 750
 * Batch size = 10
+
+The activation function that has been used is `ReLU`, as it it makes the model easy to train and achieves a good performance.
+
+The optimizer that has been used is `adam`, a stochastic gradient descent method that is able to handle sparse gradients on noisy problems, like the case of data gathered form sensors.
 
 The training process has to be done with normalised values of the data.
 
@@ -405,11 +403,13 @@ Regarding the results, the top three regression methods according to their predi
 |  Top 2  | Support Vector Regression with linear kernel | 0.939766 | 102.691471 | **7.938243** |
 |  Top 3  |   Support Vector Regression with RBF kernel  | 0.935665 | 109.684334 | 8.085332 |
 
-The Neural Network seems to provide a slightly better performance when compared to Support Vector Regression. Given that the stats are so similar, for this particular problem I would choose SVR with linear kernel, as the process is more deterministic than a NN. That is, in SVR, the performance results are always the same for each run (same R<sup>2</sup>, RMSE and MAE), but in the NN, these stats may change for each run because part of the process is randomized.
+### Conclusion
+
+The Neural Network seems to provide a slightly better performance when compared to Support Vector Regression, but given that the stats are so similar, for this particular problem I would choose SVR with linear kernel, as the process is more deterministic than a NN. That is, in SVR, the performance results are always the same for each run (same R<sup>2</sup>, RMSE and MAE), but in the NN, these stats may change for each run because part of the optimization process is randomized. Furthermore, SVR fit process is faster than the equivalent process in a NN.
 
 ## Source code
 
-You can check out the source code used for modeling and solving the problems on the GitHub repo:  
+You can check out the source code used for modeling and solving the problems, as well as plotting all graphs, on the GitHub repo:  
 [github.com/marcelcases/calibration-sensors-uncontrolled-environments](https://github.com/marcelcases/calibration-sensors-uncontrolled-environments)
 
 ## References
