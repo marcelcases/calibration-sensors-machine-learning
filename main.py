@@ -449,30 +449,32 @@ loss_functions(y_true = df_test["RefSt"], y_pred = df_test["GP_DPWK_Pred"])
 def gp_stats():
     gp_aux = pd.DataFrame({'RefSt': Y_test})
 
-    alpha = [*range(5, 55, 5)]
+    alpha = [*range(20, 202, 2)]
     # alpha = [1e-5,1e-4,1e-3,1e-2,1e-1,1,10,50,100,150,200]
     r_squared = []
     rmse = []
     mae = []
     time_ms = []
 
+    rbf = ConstantKernel() * RBF()
+
     for i in alpha:
-        rbf = ConstantKernel(constant_value=1.0, constant_value_bounds=(1e-10, 1e10)) * RBF(length_scale=1.0, length_scale_bounds=(1e-10, 1e10))
-        gp = GaussianProcessRegressor(kernel=rbf, alpha=i, random_state=0)
+        gp_rbf = GaussianProcessRegressor(kernel = rbf, alpha = i, random_state = 0)
+        # gp = GaussianProcessRegressor(kernel=rbf, alpha=i, random_state=0)
 
         # fit
         start_time = float(datetime.datetime.now().strftime('%S.%f'))
-        gp.fit(X_train, Y_train)
+        gp_rbf.fit(X_train, Y_train)
         end_time = float(datetime.datetime.now().strftime('%S.%f'))
         execution_time = (end_time - start_time) * 1000
 
         # predict
-        gp_aux["GP_Pred"] = gp.predict(X_test)
+        gp_aux["GP_RBF_Pred"] = gp_rbf.predict(X_test)
 
         # Loss
-        r_squared.append(r2_score(gp_aux["RefSt"], gp_aux["GP_Pred"]))
-        rmse.append(mean_squared_error(gp_aux["RefSt"], gp_aux["GP_Pred"]))
-        mae.append(mean_absolute_error(gp_aux["RefSt"], gp_aux["GP_Pred"]))
+        r_squared.append(r2_score(gp_aux["RefSt"], gp_aux["GP_RBF_Pred"]))
+        rmse.append(mean_squared_error(gp_aux["RefSt"], gp_aux["GP_RBF_Pred"]))
+        mae.append(mean_absolute_error(gp_aux["RefSt"], gp_aux["GP_RBF_Pred"]))
         time_ms.append(execution_time)
 
     gp_stats = pd.DataFrame({'alpha': alpha, 'r_squared': r_squared, 'rmse': rmse, 'mae': mae, 'time_ms': time_ms})
