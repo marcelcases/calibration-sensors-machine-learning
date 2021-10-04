@@ -1,6 +1,6 @@
 # Calibration of sensors in uncontrolled environments in Air Pollution Sensor Monitoring Networks
 
-The objective of this project is to calibrate an air pollution sensor in an air pollution monitoring sensor network by using different methods based on *machine learning* and *deep learning*:
+The objective of this project is to calibrate an air pollution sensor in an air pollution monitoring sensor network by using different methods based on **machine learning** and **deep learning**:
 * Multiple Linear Regression (MLR)
 * K-Nearest Neighbor (KNN)
 * Random Forest (RF)
