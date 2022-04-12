@@ -524,9 +524,36 @@ loss_functions(y_true = df_test["RefSt"], y_pred = df_test["SVR_Line_Pred"])
 loss_functions(y_true = df_test["RefSt"], y_pred = df_test["SVR_Poly_Pred"])
 
 
+# %%
+# Neural Network - SKL
+from sklearn.neural_network import MLPRegressor
+
+# Model
+mlp = MLPRegressor(hidden_layer_sizes=(16,16), activation='relu', solver='adam', max_iter=1000)
+
+# Fit
+mlp.fit(X_train,Y_train)
+
+# Predict
+# predict_train = mlp.predict(X_train)
+df_test["NN_Pred"] = mlp.predict(X_test)
+print(df_test)
+
+# Plot linear
+df_test[["RefSt", "NN_Pred"]].plot()
+plt.xticks(rotation=20)
+
+# Plot regression
+sns.lmplot(x = 'RefSt', y = 'NN_Pred', data = df_test, fit_reg = True, line_kws = {'color': 'orange'}) 
+
+# Loss
+loss_functions(y_true = df_test["RefSt"], y_pred = df_test["NN_Pred"])
+
+
+
 
 # %%
-# Neural Network
+# Neural Network - TF
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Activation, InputLayer
 from tensorflow.keras.models import Sequential
