@@ -29,6 +29,8 @@ The data is organized as follows:
 * *Temp*: Temperature sensor, in °C
 * *RelHum*: Relative humidity sensor, in %
 
+The dataset is not included in the GitHub repo for ownership reasons.
+
 ## Data observation
 
 Plot of **ozone sensor** (*Sensor_O3*, KOhms) and **ozone reference data** (*RefSt*, μgr/m<sup>3</sup>) as function of time:
