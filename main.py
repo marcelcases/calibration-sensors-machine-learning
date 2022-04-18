@@ -134,7 +134,7 @@ print('Intercept: \n', lr.intercept_)
 print('Coefficients: \n', lr.coef_)
 
 # Predict
-df_test["MLR_Pred"] = lr.intercept_ + lr.coef_[0]*df_test["Sensor_O3"] + lr.coef_[1]*df_test["Temp"] - lr.coef_[2]*df_test["RelHum"]
+df_test["MLR_Pred"] = lr.intercept_ + lr.coef_[0]*df_test["Sensor_O3"] + lr.coef_[1]*df_test["Temp"] + lr.coef_[2]*df_test["RelHum"]
 
 # Plot linear
 df_test[["RefSt", "MLR_Pred"]].plot()
